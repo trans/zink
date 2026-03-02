@@ -1,0 +1,10 @@
+name: zink
+version: 0.1.0
+description: Z-Machine interpreter for Interactive Fiction (Z3)
+
+authors:
+  - Thomas Sawyer <transfire@gmail.com>
+
+crystal: '>= 1.19.1'
+
+license: MIT
