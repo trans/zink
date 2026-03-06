@@ -448,11 +448,11 @@ module Zink
       when 5 # inc
         varnum = operand_as_varnum(operand, "inc")
         current = read_variable(varnum, pop_stack: false)
-        assign_variable(varnum, ((current.to_u32 + 1) & 0xffff).to_u16)
+        assign_variable(varnum, wrap_u16(current.to_i + 1))
       when 6 # dec
         varnum = operand_as_varnum(operand, "dec")
         current = read_variable(varnum, pop_stack: false)
-        assign_variable(varnum, ((current.to_u32 - 1) & 0xffff).to_u16)
+        assign_variable(varnum, wrap_u16(current.to_i - 1))
       when 12 # jump
         offset = signed_word(operand_value(operand))
         @pc += offset - 2
