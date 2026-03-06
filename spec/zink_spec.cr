@@ -233,6 +233,92 @@ describe Zink::ObjectTable do
   end
 end
 
+describe Zink::Worldview do
+  it "captures object tree, location, and JSON output" do
+    bytes = build_object_story_bytes
+
+    # Set global 0 (location) to object 2 via a store then quit.
+    bytes[0x40] = 0x0d_u8 # store
+    bytes[0x41] = 0x10_u8 # global 0
+    bytes[0x42] = 0x02_u8 # value 2
+    bytes[0x43] = 0xba_u8 # quit
+
+    story = Zink::Story.from_bytes(bytes)
+    vm = Zink::VM.new(story, Zink::BufferIO.new)
+    vm.run
+
+    wv = vm.worldview
+    wv.location.should eq(2_u16)
+
+    obj1 = wv[1_u16]
+    obj1.should_not be_nil
+    obj1 = obj1.not_nil!
+    obj1.parent.should eq(2_u16)
+    obj1.children.should be_empty
+    obj1.attributes.should contain(10_u8)
+    obj1.properties[5_u8].should eq(42_u16)
+    obj1.properties[3_u8].should eq(0x1234_u16)
+
+    obj2 = wv[2_u16]
+    obj2.should_not be_nil
+    obj2 = obj2.not_nil!
+    obj2.parent.should eq(0_u16)
+    obj2.children.should eq([1_u16])
+
+    wv.contents(2_u16).size.should eq(1)
+    wv.contents(2_u16).first.number.should eq(1_u16)
+
+    wv.parent_of(1_u16).not_nil!.number.should eq(2_u16)
+    wv.parent_of(2_u16).should be_nil
+
+    json = wv.to_json
+    parsed = JSON.parse(json)
+    parsed["location"].as_i.should eq(2)
+    parsed["objects"].as_a.size.should eq(2)
+  end
+end
+
+describe Zink::SaveSnapshot do
+  it "round-trips through JSON for persistence" do
+    bytes = build_story_bytes
+
+    # print "go ", store global 0 = 42, then quit
+    bytes[0x40] = 0xb2_u8 # print
+    write_word(bytes, 0x41, zword(12, 20, 0))
+    bytes[0x43] = 0x0d_u8
+    bytes[0x44] = 0x10_u8
+    bytes[0x45] = 0x2a_u8
+    bytes[0x46] = 0xba_u8
+
+    story = Zink::Story.from_bytes(bytes)
+    io = Zink::BufferIO.new
+    vm = Zink::VM.new(story, io)
+    vm.run
+
+    snapshot = vm.export_save
+    snapshot.output.should eq("go ")
+
+    json = snapshot.to_json
+    restored = Zink::SaveSnapshot.from_json(json)
+
+    restored.pc.should eq(snapshot.pc)
+    restored.stack.should eq(snapshot.stack)
+    restored.locals.should eq(snapshot.locals)
+    restored.rng_seed.should eq(snapshot.rng_seed)
+    restored.dynamic_memory.should eq(snapshot.dynamic_memory)
+    restored.call_stack.size.should eq(snapshot.call_stack.size)
+    restored.output.should eq("go ")
+
+    # Import into a fresh VM and verify state
+    story2 = Zink::Story.from_bytes(build_story_bytes)
+    vm2 = Zink::VM.new(story2, Zink::BufferIO.new)
+    vm2.import_save(restored)
+
+    story2.memory.read_word(0x0070).should eq(42_u16)
+    vm2.pc.should eq(snapshot.pc)
+  end
+end
+
 describe Zink::VM do
   it "runs a minimal print/new_line/quit program" do
     bytes = build_story_bytes

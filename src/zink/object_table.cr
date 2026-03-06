@@ -104,6 +104,37 @@ module Zink
       (property_table_address(object_number) + 1).to_u16
     end
 
+    def children(object_number : UInt16) : Array(UInt16)
+      result = [] of UInt16
+      cursor = child(object_number)
+      while cursor != 0_u8
+        result << cursor.to_u16
+        cursor = sibling(cursor.to_u16)
+      end
+      result
+    end
+
+    def active_attributes(object_number : UInt16) : Array(UInt8)
+      result = [] of UInt8
+      ATTRIBUTE_COUNT.times do |i|
+        result << i.to_u8 if test_attribute(object_number, i.to_u8)
+      end
+      result
+    end
+
+    def all_properties(object_number : UInt16) : Hash(UInt8, UInt16)
+      result = {} of UInt8 => UInt16
+      property_entries(object_number).each do |number, size, data_address|
+        value = if size == 1
+                  @memory.read_byte(data_address).to_u16
+                else
+                  @memory.read_word(data_address)
+                end
+        result[number] = value
+      end
+      result
+    end
+
     def property_length(property_data_address : UInt16) : UInt8
       return 0_u8 if property_data_address == 0_u16
       header = @memory.read_byte(property_data_address.to_i - 1)

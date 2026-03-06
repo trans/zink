@@ -2,6 +2,10 @@ module Zink
   module IODevice
     abstract def write(text : String) : Nil
     abstract def read_line : String?
+
+    def output_text : String
+      ""
+    end
   end
 
   class ConsoleIO
@@ -117,6 +121,10 @@ module Zink
       nil
     end
 
+    def output_text : String
+      @output.to_s
+    end
+
     def to_s : String
       @output.to_s
     end
@@ -138,6 +146,10 @@ module Zink
     def read_line : String?
       return nil if @inputs.empty?
       @inputs.shift
+    end
+
+    def output_text : String
+      @output.to_s
     end
 
     def to_s : String

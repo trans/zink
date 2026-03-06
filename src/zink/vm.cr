@@ -1,3 +1,6 @@
+require "base64"
+require "json"
+
 module Zink
   class UnsupportedInstructionError < Exception
   end
@@ -24,7 +27,9 @@ module Zink
     end
   end
 
-  private struct CallFrame
+  struct CallFrame
+    include JSON::Serializable
+
     getter return_pc : Int32
     getter store_variable : UInt8?
     getter locals : Array(UInt16)
@@ -34,13 +39,17 @@ module Zink
     end
   end
 
-  private struct SaveSnapshot
+  struct SaveSnapshot
+    include JSON::Serializable
+
+    @[JSON::Field(converter: Zink::Base64Converter)]
     getter dynamic_memory : Bytes
     getter pc : Int32
     getter stack : Array(UInt16)
     getter locals : Array(UInt16)
     getter call_stack : Array(CallFrame)
     getter rng_seed : UInt32?
+    getter output : String
 
     def initialize(
       @dynamic_memory : Bytes,
@@ -49,7 +58,18 @@ module Zink
       @locals : Array(UInt16),
       @call_stack : Array(CallFrame),
       @rng_seed : UInt32?,
+      @output : String = "",
     )
+    end
+  end
+
+  module Base64Converter
+    def self.to_json(value : Bytes, json : JSON::Builder) : Nil
+      json.string(Base64.strict_encode(value))
+    end
+
+    def self.from_json(pull : JSON::PullParser) : Bytes
+      Base64.decode(pull.read_string)
     end
   end
 
@@ -87,6 +107,64 @@ module Zink
       @memory.bytes[0, @memory.write_limit].copy_to(@initial_dynamic)
       @rng_seed = nil
       @save_snapshot = nil
+    end
+
+    def worldview : Worldview
+      location = read_variable(16_u8, pop_stack: false)
+      location_name = object_name(location)
+
+      objects = [] of WorldObject
+      1_u16.upto(255_u16) do |num|
+        begin
+          parent_num = @objects.parent(num)
+        rescue
+          break
+        end
+        # Skip objects with no property table (uninitialized)
+        prop_table = @objects.property_table_address(num)
+        break if prop_table == 0_u16
+
+        objects << WorldObject.new(
+          number: num,
+          name: object_name(num),
+          parent: parent_num.to_u16,
+          children: @objects.children(num),
+          attributes: @objects.active_attributes(num),
+          properties: @objects.all_properties(num),
+        )
+      end
+
+      Worldview.new(
+        location: location,
+        location_name: location_name,
+        objects: objects,
+      )
+    end
+
+    private def object_name(object_number : UInt16) : String
+      return "" if object_number == 0_u16
+      word_count = @objects.short_name_word_count(object_number)
+      return "" if word_count == 0_u8
+      text, _ = @decoder.decode_zstring_at(@objects.short_name_address(object_number).to_i)
+      text
+    end
+
+    def export_save : SaveSnapshot
+      capture_save_snapshot
+    end
+
+    def import_save(snapshot : SaveSnapshot) : Nil
+      raise RuntimeError.new(
+        "Save data size mismatch: expected #{@memory.write_limit}, got #{snapshot.dynamic_memory.size}"
+      ) unless snapshot.dynamic_memory.size == @memory.write_limit
+
+      snapshot.dynamic_memory.copy_to(@memory.bytes.to_slice[0, @memory.write_limit])
+      @pc = snapshot.pc
+      @stack = snapshot.stack.dup
+      @locals = snapshot.locals.dup
+      @call_stack = clone_call_stack(snapshot.call_stack)
+      @rng_seed = snapshot.rng_seed
+      @halted = false
     end
 
     def run(max_steps = DEFAULT_MAX_STEPS) : Nil
@@ -747,7 +825,8 @@ module Zink
         stack: @stack.dup,
         locals: @locals.dup,
         call_stack: clone_call_stack(@call_stack),
-        rng_seed: @rng_seed
+        rng_seed: @rng_seed,
+        output: @io.output_text,
       )
     end
 
