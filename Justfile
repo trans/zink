@@ -6,7 +6,8 @@ test:
 
 # Build the project
 build:
-    crystal build src/zink.cr -o bin/zink
+    mkdir -p bin
+    crystal build src/main.cr -o bin/zink
 
 # Generate API docs
 docs:
