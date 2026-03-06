@@ -107,7 +107,13 @@ module Zink
       @memory.bytes[0, @memory.write_limit].copy_to(@initial_dynamic)
       @rng_seed = nil
       @save_snapshot = nil
+      @last_read_pc = @story.entry_pc
     end
+
+    # Address of the most recent sread instruction — used by
+    # export_save_for_persistence to rewind PC so that on restore
+    # the VM re-executes the sread and blocks waiting for input.
+    getter last_read_pc : Int32
 
     def worldview : Worldview
       location = read_variable(16_u8, pop_stack: false)
@@ -151,6 +157,22 @@ module Zink
 
     def export_save : SaveSnapshot
       capture_save_snapshot
+    end
+
+    # Export a snapshot with PC rewound to the last sread instruction.
+    # On import + run_unbounded, the VM re-executes sread → read_line → blocks
+    # waiting for input, which is the correct between-turns state.
+    def export_save_for_persistence : SaveSnapshot
+      snap = capture_save_snapshot
+      SaveSnapshot.new(
+        dynamic_memory: snap.dynamic_memory,
+        pc: @last_read_pc,
+        stack: snap.stack,
+        locals: snap.locals,
+        call_stack: snap.call_stack,
+        rng_seed: snap.rng_seed,
+        output: snap.output,
+      )
     end
 
     def import_save(snapshot : SaveSnapshot) : Nil
@@ -482,6 +504,7 @@ module Zink
         ensure_operand_count(opcode_address, op, operands, 2)
         text_buffer = operand_value(operands[0])
         parse_buffer = operand_value(operands[1])
+        @last_read_pc = opcode_address
         line = @io.read_line
         unless line
           debug_log("input EOF, halting session")

@@ -107,14 +107,12 @@ module Zink
   class BufferIO
     include IODevice
 
-    getter output : String::Builder
-
     def initialize
-      @output = String::Builder.new
+      @output = ""
     end
 
     def write(text : String) : Nil
-      @output << text
+      @output += text
     end
 
     def read_line : String?
@@ -122,25 +120,23 @@ module Zink
     end
 
     def output_text : String
-      @output.to_s
+      @output
     end
 
     def to_s : String
-      @output.to_s
+      @output
     end
   end
 
   class ScriptedIO
     include IODevice
 
-    getter output : String::Builder
-
     def initialize(@inputs : Array(String))
-      @output = String::Builder.new
+      @output = ""
     end
 
     def write(text : String) : Nil
-      @output << text
+      @output += text
     end
 
     def read_line : String?
@@ -149,11 +145,11 @@ module Zink
     end
 
     def output_text : String
-      @output.to_s
+      @output
     end
 
     def to_s : String
-      @output.to_s
+      @output
     end
   end
 
