@@ -104,6 +104,7 @@ module Zink
     @command_recording_on : Bool
     @transcript : String
     @recorded_commands : String
+    @playback : CommandScript?
     @font : UInt16
     @initial_dynamic : Bytes
     @rng_seed : UInt32?
@@ -116,6 +117,20 @@ module Zink
     getter halted : Bool
     getter transcript : String
     getter recorded_commands : String
+
+    # Select keyboard (0) or the command script provided by the IODevice (1).
+    def select_input_stream(stream : Int32) : Nil
+      case stream
+      when 0
+        @playback = nil
+      when 1
+        return if @playback
+        script = @io.command_script
+        @playback = CommandScript.new(script) if script
+      else
+        raise UnsupportedInstructionError.new("Invalid input stream #{stream}")
+      end
+    end
 
     def initialize(@story : Story, @io : IODevice = BufferIO.new, @debug : Bool = false)
       @memory = @story.memory
@@ -140,6 +155,7 @@ module Zink
       @command_recording_on = false
       @transcript = ""
       @recorded_commands = ""
+      @playback = nil
       @font = 1_u16
       @initial_dynamic = Bytes.new(@memory.write_limit)
       @memory.bytes[0, @memory.write_limit].copy_to(@initial_dynamic)
@@ -634,6 +650,7 @@ module Zink
       @screen_stream_on = true
       @transcript_on = (preserved_flags & 1_u16) != 0_u16
       @command_recording_on = false
+      @playback = nil
       @font = 1_u16
       @io.erase_window(-1)
       @halted = false
@@ -643,6 +660,26 @@ module Zink
       return "\n" if zscii == 13
       return zscii.chr.to_s if zscii >= 32 && zscii <= 126
       "?"
+    end
+
+    private def read_input_line : {String?, Bool}
+      if playback = @playback
+        if line = playback.read_line
+          return {line, true}
+        end
+        @playback = nil
+      end
+      {@io.read_line, false}
+    end
+
+    private def read_input_char : {Int32?, Bool}
+      if playback = @playback
+        if char = playback.read_char
+          return {char, true}
+        end
+        @playback = nil
+      end
+      {@io.read_char, false}
     end
 
     private def write_output(text : String) : Nil

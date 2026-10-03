@@ -31,13 +31,14 @@ module Zink
         text_buffer = operand_value(operands[0])
         parse_buffer = operand_value(operands[1])
         @last_read_pc = opcode_address
-        line = @io.read_line
+        line, from_playback = read_input_line
         unless line
           debug_log("input EOF, halting session")
           @halted = true
           return
         end
-        @recorded_commands += "#{line}\n" if @command_recording_on
+        @recorded_commands += CommandScript.encode_line(line) if @command_recording_on && !from_playback
+        @io.write("#{line}\n") if from_playback && @screen_stream_on
         @transcript += "#{line}\n" if (@memory.read_word(0x10) & 1_u16) != 0_u16
         @parser.read_into_buffers(line, text_buffer, parse_buffer)
         store_variable(read_store_variable, 13_u16) if @header.version >= 5
@@ -131,20 +132,19 @@ module Zink
         end
       when 20 # input_stream
         ensure_operand_count(opcode_address, op, operands, 1)
-        stream = operand_value(operands[0])
-        raise UnsupportedInstructionError.new("Invalid input stream #{stream}") if stream > 1_u16
+        select_input_stream(operand_value(operands[0]).to_i)
       when 21 # sound_effect
         operands.each { |operand| operand_value(operand) }
       when 22 # read_char
         ensure_operand_count(opcode_address, op, operands, 1)
         operands.each { |operand| operand_value(operand) }
         @last_read_pc = opcode_address
-        char = @io.read_char
+        char, from_playback = read_input_char
         unless char
           @halted = true
           return
         end
-        @recorded_commands += char == 13 ? "\n" : char.chr.to_s if @command_recording_on
+        @recorded_commands += CommandScript.encode_char(char) if @command_recording_on && !from_playback
         @transcript += char == 13 ? "\n" : char.chr.to_s if (@memory.read_word(0x10) & 1_u16) != 0_u16
         store_variable(read_store_variable, char.to_u16)
       when 23 # scan_table

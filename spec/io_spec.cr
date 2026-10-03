@@ -18,9 +18,42 @@ describe Zink::RecordingIO do
       File.delete(path) if File.exists?(path)
     end
   end
+
+  it "writes replayable key and bracket records" do
+    path = "/tmp/zink-keys-#{Process.pid}-#{Random.rand(1_000_000)}.txt"
+
+    begin
+      inner = Zink::ScriptedIO.new(["take [lamp]", "[", ""])
+      recorder = Zink::RecordingIO.new(inner, path)
+
+      recorder.read_line.should eq("take [lamp]")
+      recorder.read_char.should eq(91)
+      recorder.read_char.should eq(13)
+      recorder.close
+
+      File.read(path).should eq("take [91]lamp]\n[91]\n\n")
+    ensure
+      File.delete(path) if File.exists?(path)
+    end
+  end
 end
 
 describe Zink::ConsoleIO do
+  it "opens a command file selected at the prompt" do
+    path = "/tmp/zink-playback-#{Process.pid}-#{Random.rand(1_000_000)}.txt"
+
+    begin
+      File.write(path, "north\n")
+      output = IO::Memory.new
+      io = Zink::ConsoleIO.new(output: output, input: IO::Memory.new("#{path}\n"))
+
+      io.command_script.should eq("north\n")
+      output.to_s.should contain("Command file to replay")
+    ensure
+      File.delete(path) if File.exists?(path)
+    end
+  end
+
   it "adds a trailing space after prompt character" do
     output = IO::Memory.new
     io = Zink::ConsoleIO.new(output: output, input: IO::Memory.new(""), width: 80)

@@ -82,6 +82,11 @@
       
     </li>
   
+  <li class=" " data-id="zink/Zink/CommandScript" data-name="zink::commandscript">
+      <a href="Zink/CommandScript.html">CommandScript</a>
+
+    </li>
+
   <li class=" " data-id="zink/Zink/ConsoleIO" data-name="zink::consoleio">
       <a href="Zink/ConsoleIO.html">ConsoleIO</a>
       
@@ -195,8 +200,11 @@ globals.</p>
 <pre><code class="language-sh">crystal run src/main.cr -- path/to/story.z5</code></pre>
 <p>Or build an executable with <code>just build</code> and run <code>bin/zink path/to/story.z5</code>.
 Use <code>--worldview</code> to boot a story, submit <code>look</code>, and print its state as JSON.
-Use <code>--record-actions FILE</code> to record input lines. <code>--debug</code> prints VM instruction
-addresses to standard error.</p>
+Use <code>--record-actions FILE</code> to record commands and keypresses, then
+<code>--playback-commands FILE</code> to replay them. Playback returns to keyboard input
+when the file ends. If a story requests playback without that option, the
+console prompts for a command file. <code>--debug</code> prints VM instruction addresses
+to standard error.</p>
 <pre><code class="language-sh">crystal spec</code></pre>
 <p>The suite includes the licensed CZECH interpreter checks for v3, v4, and v5. A
 separate v4 art story smoke test can be run after downloading
@@ -218,6 +226,9 @@ so their <code>location</code> field is zero.</p>
 <p><code>VM#export_save</code> and <code>VM#import_save</code> transfer execution state. The snapshot is
 JSON serializable. <code>VM#export_save_for_persistence</code> rewinds to the latest input
 instruction so a restored session can wait for a new command.</p>
+<p>For embedded playback, pass <code>command_script:</code> to <code>ConsoleIO</code> or <code>ScriptedIO</code>.
+Call <code>VM#select_input_stream(1)</code> to start playback immediately, or let the story
+select it with <code>input_stream 1</code>.</p>
 <h2><a id="code-layout" class="anchor" href="#code-layout">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -239,11 +250,13 @@ Z-machine window as readable rows on a linear text device.</li>
 prioritized follow-up work.</p>
 <p>Zink advertises no colour, sound, graphics, mouse, or timed-input capability.
 Transcript and command-file streams are available through <code>VM#transcript</code> and
-<code>VM#recorded_commands</code>; Zink does not write those streams to files. Extended
+<code>VM#recorded_commands</code>; Zink does not write those streams to files automatically.
+Extended
 ZSCII character mapping and true single-key terminal input are not implemented;
 for <code>read_char</code>, type a key followed by Enter. Save/restore and auxiliary saves
 use memory within a running VM; an application can persist snapshots through the
-state API above. Command-file playback through input stream 1 is not implemented.
+state API above. Command-file playback supports printable ASCII and bracketed
+ZSCII key codes; extended ZSCII text is still incomplete.
 The upper window is rendered as a linear transcript, so screen redraws cannot
 match a full terminal display.</p>
 </div>

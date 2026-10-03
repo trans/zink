@@ -35,6 +35,10 @@ module Zink
       @inner.output_text
     end
 
+    def command_script : String?
+      @inner.command_script
+    end
+
     def write(text : String) : Nil
       if @selected == 0
         @inner.write(text)

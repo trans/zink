@@ -9,7 +9,7 @@ defines the expected behavior.
 | Core instructions, variables, objects, and properties | Licensed CZECH 0.8 stories pass all non-visual checks: v3 349/349, v4 367/367, v5 406/406. | Add tests when a new story exposes a gap. |
 | Real story execution | Zork I/II/III v3 and Solid Gold Zork I v5 were played through scripted sequences. The IF Art Show 2000 `art.z4` passes an optional smoke test. | Broaden v4 and v5 playthroughs. |
 | Keyboard input | Line input works. `read_char` uses the first character of a line. | Add a single-key terminal input method; keep scripted I/O deterministic. |
-| Command-file input | Output stream 4 records commands in memory. `input_stream 1` does not play them back. | Give `IODevice` a command playback source and implement stream selection. |
+| Command-file input | Output stream 4 records commands in memory. `--record-actions` writes replayable files; `--playback-commands` or `input_stream 1` plays them back and returns to keyboard at EOF. | Extend command-file text support beyond ASCII. |
 | Screen | Both text windows render into a linear transcript. Cursor placement and redraws cannot be represented fully there. | Add a terminal screen backend while keeping the transcript backend. |
 | Characters and timed input | ASCII text works. Extended ZSCII is incomplete; timed input is unadvertised. | Add character mapping, then timed reads if a story requires them. |
 | Media and styles | Colour, sound, graphics, and mouse are unadvertised. Styles are accepted without visual effects. | Implement only with an output backend that can display them. |

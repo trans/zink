@@ -7,6 +7,7 @@ module Zink
       max_steps : Int32? = nil
       story_path : String? = nil
       record_actions_path : String? = nil
+      playback_commands_path : String? = nil
       dump_worldview = false
 
       exit_code : Int32? = nil
@@ -18,6 +19,7 @@ module Zink
         opts.on("--debug", "Enable VM trace output") { debug = true }
         opts.on("--max-steps N", "Limit VM execution steps") { |n| max_steps = n.to_i }
         opts.on("--record-actions FILE", "Record player input to a file") { |f| record_actions_path = f }
+        opts.on("--playback-commands FILE", "Replay commands from a file") { |f| playback_commands_path = f }
         opts.on("--worldview", "Boot game and dump worldview as JSON") { dump_worldview = true }
         opts.on("-h", "--help", "Show this help") do
           STDERR.puts(opts)
@@ -80,7 +82,8 @@ module Zink
         return 0
       end
 
-      base_io = ConsoleIO.new
+      command_script = playback_commands_path.try { |path| File.read(path) }
+      base_io = ConsoleIO.new(command_script: command_script)
       recording_io : RecordingIO? = nil
       io : IODevice = base_io
       if path = record_actions_path
@@ -91,6 +94,7 @@ module Zink
 
       begin
         vm = VM.new(story, io, debug: debug_mode)
+        vm.select_input_stream(1) if command_script
         if limit = max_steps
           vm.run(limit)
         else

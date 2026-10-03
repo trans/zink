@@ -14,8 +14,11 @@ crystal run src/main.cr -- path/to/story.z5
 
 Or build an executable with `just build` and run `bin/zink path/to/story.z5`.
 Use `--worldview` to boot a story, submit `look`, and print its state as JSON.
-Use `--record-actions FILE` to record input lines. `--debug` prints VM instruction
-addresses to standard error.
+Use `--record-actions FILE` to record commands and keypresses, then
+`--playback-commands FILE` to replay them. Playback returns to keyboard input
+when the file ends. If a story requests playback without that option, the
+console prompts for a command file. `--debug` prints VM instruction addresses
+to standard error.
 
 ```sh
 crystal spec
@@ -45,6 +48,10 @@ so their `location` field is zero.
 JSON serializable. `VM#export_save_for_persistence` rewinds to the latest input
 instruction so a restored session can wait for a new command.
 
+For embedded playback, pass `command_script:` to `ConsoleIO` or `ScriptedIO`.
+Call `VM#select_input_stream(1)` to start playback immediately, or let the story
+select it with `input_stream 1`.
+
 ## Code layout
 
 - `Memory`, `Header`, and `Story` own story bytes and file metadata.
@@ -60,10 +67,12 @@ prioritized follow-up work.
 
 Zink advertises no colour, sound, graphics, mouse, or timed-input capability.
 Transcript and command-file streams are available through `VM#transcript` and
-`VM#recorded_commands`; Zink does not write those streams to files. Extended
+`VM#recorded_commands`; Zink does not write those streams to files automatically.
+Extended
 ZSCII character mapping and true single-key terminal input are not implemented;
 for `read_char`, type a key followed by Enter. Save/restore and auxiliary saves
 use memory within a running VM; an application can persist snapshots through the
-state API above. Command-file playback through input stream 1 is not implemented.
+state API above. Command-file playback supports printable ASCII and bracketed
+ZSCII key codes; extended ZSCII text is still incomplete.
 The upper window is rendered as a linear transcript, so screen redraws cannot
 match a full terminal display.

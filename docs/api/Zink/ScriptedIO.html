@@ -82,6 +82,11 @@
       
     </li>
   
+  <li class=" " data-id="zink/Zink/CommandScript" data-name="zink::commandscript">
+      <a href="../Zink/CommandScript.html">CommandScript</a>
+
+    </li>
+
   <li class=" " data-id="zink/Zink/ConsoleIO" data-name="zink::consoleio">
       <a href="../Zink/ConsoleIO.html">ConsoleIO</a>
       
@@ -253,7 +258,7 @@
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#new%28inputs%3AArray%28String%29%29-class-method" class="signature"><strong>.new</strong>(inputs : Array(String))</a>
+        <a href="#new%28inputs%3AArray%28String%29%2Ccommand_script%3AString%7CNil%3Dnil%29-class-method" class="signature"><strong>.new</strong>(inputs : Array(String), command_script : String | Nil = <span class="n">nil</span>)</a>
         
       </li>
     
@@ -275,6 +280,11 @@
   </h2>
   <ul class="list-summary">
     
+      <li class="entry-summary">
+        <a href="#command_script%3AString%7CNil-instance-method" class="signature"><strong>#command_script</strong> : String | Nil</a>
+
+      </li>
+
       <li class="entry-summary">
         <a href="#output_text%3AString-instance-method" class="signature"><strong>#output_text</strong> : String</a>
         
@@ -311,6 +321,11 @@
     <a href="../Zink/IODevice.html#buffer_mode%28enabled%3ABool%29%3ANil-instance-method" class="tooltip">
       <span>buffer_mode(enabled : Bool) : Nil</span>
     buffer_mode</a>,
+
+
+    <a href="../Zink/IODevice.html#command_script%3AString%7CNil-instance-method" class="tooltip">
+      <span>command_script : String | Nil</span>
+    command_script</a>,
 
 
     <a href="../Zink/IODevice.html#cursor%3ATuple%28Int32%2CInt32%29-instance-method" class="tooltip">
@@ -433,12 +448,12 @@
     Constructor Detail
   </h2>
   
-    <div class="entry-detail" id="new(inputs:Array(String))-class-method">
+    <div class="entry-detail" id="new(inputs:Array(String),command_script:String|Nil=nil)-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(inputs : Array(String))
+        def self.<strong>new</strong>(inputs : Array(String), command_script : String | Nil = <span class="n">nil</span>)
 
-        <a class="method-permalink" href="#new%28inputs%3AArray%28String%29%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28inputs%3AArray%28String%29%2Ccommand_script%3AString%7CNil%3Dnil%29-class-method">#</a>
       </div>
       
       <br/>
@@ -463,6 +478,20 @@
     Instance Method Detail
   </h2>
   
+    <div class="entry-detail" id="command_script:String|Nil-instance-method">
+      <div class="signature">
+
+        def <strong>command_script</strong> : String | Nil
+
+        <a class="method-permalink" href="#command_script%3AString%7CNil-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="output_text:String-instance-method">
       <div class="signature">
         

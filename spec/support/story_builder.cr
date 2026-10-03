@@ -9,8 +9,10 @@ class SpecStoryBuilder
   getter bytes : Bytes
   getter cursor : Int32
 
-  def initialize(version : UInt8 = 3_u8, static_base : UInt16 = 0x80_u16, size : Int32 = 512)
-    @bytes = build_story_bytes(version: version, static_base: static_base, size: size)
+  def initialize(version : UInt8 = 3_u8, static_base : UInt16 = 0x80_u16,
+                 dictionary_table : UInt16 = 0x50_u16, size : Int32 = 512)
+    @bytes = build_story_bytes(version: version, static_base: static_base,
+      dictionary_table: dictionary_table, size: size)
     @cursor = 0x40
   end
 

@@ -53,8 +53,11 @@ interpreter features still to implement are listed in README.md.
 
 Compatibility checks added 2026-10-03: CZECH passes 349/349 v3, 367/367 v4,
 and 406/406 v5 non-visual checks. The IF Art Show `art.z4` runs as an optional smoke test.
-Remaining gaps are terminal key input, input stream 1 playback, extended ZSCII,
+Remaining gaps are terminal key input, extended ZSCII,
 timed input, and faithful screen redraws/styles.
+
+Input stream 1 playback added 2026-10-03, with `--playback-commands FILE` and
+replay-compatible command recording through `--record-actions FILE`.
 
 infocomic has the Solid Gold edition of Zork I
 (`stories/zork1-invclues-r52-s871125.z5`, release 52, 1987), Zork I with

@@ -3,6 +3,10 @@ module Zink
     abstract def write(text : String) : Nil
     abstract def read_line : String?
 
+    def command_script : String?
+      nil
+    end
+
     def read_char : Int32?
       line = read_line
       return nil unless line
@@ -61,7 +65,7 @@ module Zink
     @line_start : Bool
     @skip_space_after_prompt : Bool
 
-    def initialize(@output : IO = STDOUT, @input : IO = STDIN, width : Int32? = nil)
+    def initialize(@output : IO = STDOUT, @input : IO = STDIN, width : Int32? = nil, @command_script : String? = nil)
       @wrap_width = normalize_width(width || ENV["COLUMNS"]?.try(&.to_i?) || 80)
       @column = 0
       @line_start = true
@@ -112,6 +116,18 @@ module Zink
 
     def read_line : String?
       @input.gets
+    end
+
+    def command_script : String?
+      return @command_script if @command_script
+
+      write("\nCommand file to replay (blank to cancel): ")
+      path = @input.gets
+      return nil if path.nil? || path.empty?
+      File.read(path)
+    rescue ex : File::Error
+      write("\nCannot open command file: #{ex.message}\n")
+      nil
     end
 
     def screen_width : Int32
@@ -182,7 +198,9 @@ module Zink
   class ScriptedIO
     include IODevice
 
-    def initialize(@inputs : Array(String))
+    getter command_script : String?
+
+    def initialize(@inputs : Array(String), @command_script : String? = nil)
       @output = ""
     end
 
@@ -215,16 +233,26 @@ module Zink
       @inner.write(text)
     end
 
+    def command_script : String?
+      @inner.command_script
+    end
+
     def read_line : String?
       line = @inner.read_line
       return nil unless line
 
-      @file << line
-      unless line.ends_with?('\n')
-        @file << '\n'
-      end
+      @file << CommandScript.encode_line(line)
       @file.flush
       line
+    end
+
+    def read_char : Int32?
+      char = @inner.read_char
+      return nil unless char
+
+      @file << CommandScript.encode_char(char)
+      @file.flush
+      char
     end
 
     def close : Nil

@@ -143,6 +143,55 @@ describe Zink::VM do
     (story.memory.read_word(0x10) & 1_u16).should eq(0_u16)
   end
 
+  it "replays command-file keys and lines, then returns to keyboard at EOF" do
+    builder = SpecStoryBuilder.new(version: 5_u8, static_base: 0x0180_u16,
+      dictionary_table: 0x01c0_u16)
+    builder.emit(0xf3_u8, 0x7f_u8, 4_u8)          # output_stream 4
+    builder.emit(0xf6_u8, 0x7f_u8, 1_u8, 0x10_u8) # read_char -> global 0
+    builder.emit(0xe4_u8, 0x0f_u8).emit_word(0x0080_u16).emit_word(0x00a0_u16).emit(0x11_u8)
+    builder.emit(0xe4_u8, 0x0f_u8).emit_word(0x00c0_u16).emit_word(0x00e0_u16).emit(0x12_u8)
+    builder.emit(0xf6_u8, 0x7f_u8, 1_u8, 0x13_u8) # read_char -> global 3
+    builder.emit(0xba_u8)
+    [0x80, 0xc0].each { |address| builder.bytes[address] = 20_u8 }
+    [0xa0, 0xe0].each { |address| builder.bytes[address] = 4_u8 }
+
+    story = builder.story
+    io = Zink::ScriptedIO.new(["south", "["], command_script: "[91]\nlook\n")
+    vm = Zink::VM.new(story, io)
+    vm.select_input_stream(1)
+    vm.run
+
+    story.memory.read_word(0x70).should eq(91_u16)
+    story.memory.read_word(0x76).should eq(91_u16)
+    story.memory.read_byte(0x81).should eq(4_u8)
+    story.memory.read_byte(0xc1).should eq(5_u8)
+    io.output_text.should eq("look\n")
+    vm.recorded_commands.should eq("south\n[91]\n")
+  end
+
+  it "switches command-file input off and restarts it when reselected" do
+    builder = SpecStoryBuilder.new(version: 5_u8, static_base: 0x0180_u16,
+      dictionary_table: 0x01c0_u16)
+    builder.emit(0xf4_u8, 0x7f_u8, 1_u8) # input_stream 1
+    builder.emit(0xe4_u8, 0x0f_u8).emit_word(0x0080_u16).emit_word(0x00a0_u16).emit(0x10_u8)
+    builder.emit(0xf4_u8, 0x7f_u8, 0_u8) # input_stream 0
+    builder.emit(0xe4_u8, 0x0f_u8).emit_word(0x00c0_u16).emit_word(0x00e0_u16).emit(0x11_u8)
+    builder.emit(0xf4_u8, 0x7f_u8, 1_u8) # input_stream 1
+    builder.emit(0xe4_u8, 0x0f_u8).emit_word(0x0100_u16).emit_word(0x0110_u16).emit(0x12_u8)
+    builder.emit(0xba_u8)
+    [0x80, 0xc0, 0x100].each { |address| builder.bytes[address] = 20_u8 }
+    [0xa0, 0xe0, 0x110].each { |address| builder.bytes[address] = 4_u8 }
+
+    story = builder.story
+    io = Zink::ScriptedIO.new(["west"], command_script: "east\n")
+    vm = Zink::VM.new(story, io)
+    vm.run
+
+    story.memory.read_byte(0x101).should eq(4_u8)
+    String.new(story.memory.bytes[0x102, 4]).should eq("east")
+    io.output_text.should eq("east\neast\n")
+  end
+
   it "resumes v5 extended restore at save with result 2" do
     bytes = build_story_bytes(version: 5_u8)
     bytes[0x40] = 0xbe_u8 # EXT save, no operands -> global 0
