@@ -42,10 +42,11 @@ end
 
 private def build_object_story_bytes : Bytes
   bytes = build_story_bytes(
-    static_base: 0x0200_u16,
+    static_base: 0x0400_u16,
     dictionary_table: 0x0050_u16,
     object_table: 0x0090_u16,
-    globals_table: 0x0080_u16
+    globals_table: 0x0200_u16,
+    size: 2048
   )
 
   # Property defaults: property 5 defaults to 99 if missing.
@@ -75,14 +76,16 @@ private def build_object_story_bytes : Bytes
   bytes[object2 + 6] = 0x01_u8
   write_word(bytes, object2 + 7, 0x0140_u16)
 
-  # Object 1 properties: prop 5 size 1 => 42, prop 3 size 2 => 0x1234.
+  # Object 1 properties: prop 5 size 1, prop 3 size 2, prop 2 size 5.
   bytes[0x0120] = 0_u8 # short name words
   bytes[0x0121] = 0x05_u8
   bytes[0x0122] = 0x2a_u8
   bytes[0x0123] = 0x23_u8
   bytes[0x0124] = 0x12_u8
   bytes[0x0125] = 0x34_u8
-  bytes[0x0126] = 0x00_u8
+  bytes[0x0126] = 0x82_u8
+  write_bytes(bytes, 0x0127, Bytes[0x12, 0x34, 0x56, 0x78, 0x9a])
+  bytes[0x012c] = 0x00_u8
 
   # Object 2 has no properties.
   bytes[0x0140] = 0_u8
@@ -209,7 +212,12 @@ describe Zink::ObjectTable do
 
     objects.get_property(1_u16, 5_u8).should eq(42_u16)
     objects.get_property(1_u16, 3_u8).should eq(0x1234_u16)
+    objects.get_property(1_u16, 2_u8).should eq(0x1234_u16)
     objects.get_property(1_u16, 7_u8).should eq(0_u16)
+
+    objects.all_property_bytes(1_u16)[2_u8].should eq([0x12_u8, 0x34_u8, 0x56_u8, 0x78_u8, 0x9a_u8])
+    objects.all_property_bytes(1_u16)[5_u8].should eq([0x2a_u8])
+    objects.object_count.should eq(2)
 
     prop5_addr = objects.get_property_address(1_u16, 5_u8)
     prop3_addr = objects.get_property_address(1_u16, 3_u8)
@@ -218,7 +226,8 @@ describe Zink::ObjectTable do
 
     objects.get_next_property_number(1_u16, 0_u8).should eq(5_u8)
     objects.get_next_property_number(1_u16, 5_u8).should eq(3_u8)
-    objects.get_next_property_number(1_u16, 3_u8).should eq(0_u8)
+    objects.get_next_property_number(1_u16, 3_u8).should eq(2_u8)
+    objects.get_next_property_number(1_u16, 2_u8).should eq(0_u8)
 
     objects.remove_object(1_u16)
     objects.parent(1_u16).should eq(0_u8)
@@ -230,6 +239,26 @@ describe Zink::ObjectTable do
 
     objects.put_property(1_u16, 5_u8, 7_u16)
     objects.get_property(1_u16, 5_u8).should eq(7_u16)
+  end
+end
+
+describe "object table boundary" do
+  it "stops at the first property table even when property data resembles an object" do
+    bytes = build_object_story_bytes
+    first_entry = 0x0090 + 62
+    first_property_table = first_entry + 2 * 9
+    write_word(bytes, first_entry + 7, first_property_table.to_u16)
+    write_word(bytes, first_entry + 9 + 7, 0x0140_u16)
+    bytes[first_property_table] = 0_u8
+    bytes[first_property_table + 1] = 0_u8
+    write_word(bytes, first_property_table + 7, 0x0150_u16)
+
+    story = Zink::Story.from_bytes(bytes)
+    objects = Zink::ObjectTable.new(story.memory, story.header)
+    objects.object_count.should eq(2)
+
+    wv = Zink::VM.new(story).worldview
+    wv.objects.map(&.number).should eq([1_u16, 2_u16])
   end
 end
 
@@ -258,6 +287,12 @@ describe Zink::Worldview do
     obj1.attributes.should contain(10_u8)
     obj1.properties[5_u8].should eq(42_u16)
     obj1.properties[3_u8].should eq(0x1234_u16)
+    obj1.property_bytes[2_u8].should eq([0x12_u8, 0x34_u8, 0x56_u8, 0x78_u8, 0x9a_u8])
+    obj1.property_bytes[3_u8].should eq([0x12_u8, 0x34_u8])
+    wv.globals[16_u8].should eq(2_u16)
+    wv.globals.size.should eq(240)
+    vm.global(16_u8).should eq(2_u16)
+    expect_raises(ArgumentError) { vm.global(15_u8) }
 
     obj2 = wv[2_u16]
     obj2.should_not be_nil
@@ -275,6 +310,9 @@ describe Zink::Worldview do
     parsed = JSON.parse(json)
     parsed["location"].as_i.should eq(2)
     parsed["objects"].as_a.size.should eq(2)
+    parsed["globals"]["16"].as_i.should eq(2)
+    parsed["objects"][0]["property_bytes"]["2"].as_a.map(&.as_i).should eq([0x12, 0x34, 0x56, 0x78, 0x9a])
+    Zink::Worldview.from_json(json).globals[16_u8].should eq(2_u16)
   end
 end
 
@@ -595,10 +633,10 @@ describe Zink::VM do
     vm.run
 
     memory = story.memory
-    memory.read_word(0x0080).should eq(2_u16)  # global 0
-    memory.read_word(0x0082).should eq(42_u16) # global 1
-    memory.read_word(0x0084).should eq(5_u16)  # global 2
-    memory.read_word(0x0086).should eq(7_u16)  # global 3
+    memory.read_word(0x0200).should eq(2_u16)  # global 0
+    memory.read_word(0x0202).should eq(42_u16) # global 1
+    memory.read_word(0x0204).should eq(5_u16)  # global 2
+    memory.read_word(0x0206).should eq(7_u16)  # global 3
   end
 
   it "supports print_addr, print_paddr, and print_char" do

@@ -116,27 +116,24 @@ module Zink
     getter last_read_pc : Int32
 
     def worldview : Worldview
-      location = read_variable(16_u8, pop_stack: false)
+      globals = {} of UInt8 => UInt16
+      16.upto(255) do |variable_number|
+        globals[variable_number.to_u8] = global(variable_number.to_u8)
+      end
+      location = globals[16_u8]
       location_name = object_name(location)
 
       objects = [] of WorldObject
-      1_u16.upto(255_u16) do |num|
-        begin
-          parent_num = @objects.parent(num)
-        rescue
-          break
-        end
-        # Skip objects with no property table (uninitialized)
-        prop_table = @objects.property_table_address(num)
-        break if prop_table == 0_u16
-
+      1.upto(@objects.object_count) do |number|
+        num = number.to_u16
         objects << WorldObject.new(
           number: num,
           name: object_name(num),
-          parent: parent_num.to_u16,
+          parent: @objects.parent(num).to_u16,
           children: @objects.children(num),
           attributes: @objects.active_attributes(num),
           properties: @objects.all_properties(num),
+          property_bytes: @objects.all_property_bytes(num),
         )
       end
 
@@ -144,7 +141,13 @@ module Zink
         location: location,
         location_name: location_name,
         objects: objects,
+        globals: globals,
       )
+    end
+
+    def global(variable_number : UInt8) : UInt16
+      raise ArgumentError.new("Global variable number must be 16 through 255") if variable_number < 16_u8
+      read_variable(variable_number, pop_stack: false)
     end
 
     private def object_name(object_number : UInt16) : String

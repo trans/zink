@@ -135,6 +135,39 @@ module Zink
       result
     end
 
+    # Return every byte of each property, including values longer than a word.
+    def all_property_bytes(object_number : UInt16) : Hash(UInt8, Array(UInt8))
+      result = {} of UInt8 => Array(UInt8)
+      property_entries(object_number).each do |number, size, data_address|
+        result[number] = Array.new(size) { |offset| @memory.read_byte(data_address + offset) }
+      end
+      result
+    end
+
+    # Property tables follow the object entries. The earliest table address
+    # bounds the scan, even when its bytes resemble another object entry.
+    def object_count : Int32
+      objects_base = @header.object_table.to_i + DEFAULT_PROPERTY_COUNT * 2
+      first_property_table = @memory.size
+      count = 0
+
+      1.upto(255) do |number|
+        entry_address = objects_base + (number - 1) * OBJECT_ENTRY_SIZE
+        break if entry_address + OBJECT_ENTRY_SIZE > first_property_table
+
+        property_address = @memory.read_word(entry_address + 7).to_i
+        break if property_address == 0
+        if property_address < entry_address + OBJECT_ENTRY_SIZE || property_address >= @memory.size
+          raise FormatError.new("Invalid property table address for object #{number}: 0x#{property_address.to_s(16)}")
+        end
+
+        first_property_table = Math.min(first_property_table, property_address)
+        count += 1
+      end
+
+      count
+    end
+
     def property_length(property_data_address : UInt16) : UInt8
       return 0_u8 if property_data_address == 0_u16
       header = @memory.read_byte(property_data_address.to_i - 1)

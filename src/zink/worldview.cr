@@ -9,7 +9,10 @@ module Zink
     getter parent : UInt16
     getter children : Array(UInt16)
     getter attributes : Array(UInt8)
+    # One-byte values or the first word of a longer property.
     getter properties : Hash(UInt8, UInt16)
+    # Complete property contents, in storage order.
+    getter property_bytes : Hash(UInt8, Array(UInt8))
 
     def initialize(
       @number : UInt16,
@@ -18,6 +21,7 @@ module Zink
       @children : Array(UInt16),
       @attributes : Array(UInt8),
       @properties : Hash(UInt8, UInt16),
+      @property_bytes : Hash(UInt8, Array(UInt8)),
     )
     end
   end
@@ -28,11 +32,14 @@ module Zink
     getter location : UInt16
     getter location_name : String
     getter objects : Array(WorldObject)
+    # Keys are Z-machine variable numbers (16 through 255).
+    getter globals : Hash(UInt8, UInt16)
 
     def initialize(
       @location : UInt16,
       @location_name : String,
       @objects : Array(WorldObject),
+      @globals : Hash(UInt8, UInt16),
     )
     end
 
