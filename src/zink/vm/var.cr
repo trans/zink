@@ -71,7 +71,7 @@ module Zink
       when 9 # pull
         ensure_operand_count(opcode_address, op, operands, 1)
         varnum = operand_as_varnum(operands[0], "pull")
-        store_variable(varnum, pop_stack)
+        assign_variable(varnum, pop_stack)
       when 10 # split_window
         ensure_operand_count(opcode_address, op, operands, 1)
         @io.split_window(operand_value(operands[0]).to_i)

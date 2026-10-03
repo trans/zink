@@ -198,6 +198,12 @@ Use <code>--worldview</code> to boot a story, submit <code>look</code>, and prin
 Use <code>--record-actions FILE</code> to record input lines. <code>--debug</code> prints VM instruction
 addresses to standard error.</p>
 <pre><code class="language-sh">crystal spec</code></pre>
+<p>The suite includes the licensed CZECH interpreter checks for v3, v4, and v5. A
+separate v4 art story smoke test can be run after downloading
+<a href="https://ifarchive.org/if-archive/games/if-artshow/year2000/art.z4"><code>art.z4</code></a>:</p>
+<pre><code class="language-sh">ZINK_ART_V4_STORY=/path/to/art.z4 crystal spec spec/integration/art_v4_spec.cr</code></pre>
+<p>That story stays outside the repository. The test fixture is the IF Art Show
+2000 release (SHA-256 <code>5bb9d312c61f6af47c7d67fd138adf338ef3dba36163a0177da5904e49d6a962</code>).</p>
 <h2><a id="state-api" class="anchor" href="#state-api">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
@@ -229,14 +235,17 @@ Z-machine window as readable rows on a linear text device.</li>
     <use href="#octicon-link"/>
   </svg>
 </a>Current limits</h2>
+<p>See <a href="../compatibility.md">compatibility status</a> for tested versions and
+prioritized follow-up work.</p>
 <p>Zink advertises no colour, sound, graphics, mouse, or timed-input capability.
 Transcript and command-file streams are available through <code>VM#transcript</code> and
 <code>VM#recorded_commands</code>; Zink does not write those streams to files. Extended
 ZSCII character mapping and true single-key terminal input are not implemented;
 for <code>read_char</code>, type a key followed by Enter. Save/restore and auxiliary saves
 use memory within a running VM; an application can persist snapshots through the
-state API above. Version 4 has synthetic opcode tests, but no real v4 story has
-been exercised yet.</p>
+state API above. Command-file playback through input stream 1 is not implemented.
+The upper window is rendered as a linear transcript, so screen redraws cannot
+match a full terminal display.</p>
 </div>
 </body>
 </html>

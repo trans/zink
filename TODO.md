@@ -51,6 +51,11 @@ Text-mode v4/v5 execution added 2026-10-03. The Solid Gold Zork I v5 story
 boots, accepts commands, saves/restores, and opens InvisiClues. Optional
 interpreter features still to implement are listed in README.md.
 
+Compatibility checks added 2026-10-03: CZECH passes 349/349 v3, 367/367 v4,
+and 406/406 v5 non-visual checks. The IF Art Show `art.z4` runs as an optional smoke test.
+Remaining gaps are terminal key input, input stream 1 playback, extended ZSCII,
+timed input, and faithful screen redraws/styles.
+
 infocomic has the Solid Gold edition of Zork I
 (`stories/zork1-invclues-r52-s871125.z5`, release 52, 1987), Zork I with
 Infocom's InvisiClues built in (the `HINT` command). This story prompted the

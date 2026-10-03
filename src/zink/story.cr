@@ -3,8 +3,10 @@ module Zink
     getter memory : Memory
     getter header : Header
     getter file_length : Int32
+    @checksum_valid : Bool
 
     def initialize(@memory : Memory, @header : Header, @file_length : Int32)
+      @checksum_valid = calculate_checksum_valid
     end
 
     def self.load(path : String) : Story
@@ -31,6 +33,10 @@ module Zink
     end
 
     def checksum_valid? : Bool
+      @checksum_valid
+    end
+
+    private def calculate_checksum_valid : Bool
       expected = @memory.read_word(0x1c)
       return true if expected == 0_u16
 

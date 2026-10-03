@@ -72,7 +72,7 @@ module Zink
         ensure_operand_count(opcode_address, op, operands, 2)
         varnum = operand_as_varnum(operands[0], "store")
         value = operand_value(operands[1])
-        store_variable(varnum, value)
+        assign_variable(varnum, value)
       when 14 # insert_obj
         ensure_operand_count(opcode_address, op, operands, 2)
         object = as_object_number(operand_value(operands[0]), "insert_obj")
