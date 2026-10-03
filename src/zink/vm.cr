@@ -34,8 +34,9 @@ module Zink
     getter store_variable : UInt8?
     getter locals : Array(UInt16)
     getter stack_base : Int32
+    getter arg_count : Int32
 
-    def initialize(@return_pc : Int32, @store_variable : UInt8?, @locals : Array(UInt16), @stack_base : Int32)
+    def initialize(@return_pc : Int32, @store_variable : UInt8?, @locals : Array(UInt16), @stack_base : Int32, @arg_count : Int32 = 0)
     end
   end
 
@@ -50,6 +51,12 @@ module Zink
     getter call_stack : Array(CallFrame)
     getter rng_seed : UInt32?
     getter output : String
+    getter arg_count : Int32
+    getter resume_store_var : UInt8?
+    getter memory_streams : Array(Int32)
+    getter screen_stream_on : Bool
+    getter transcript_on : Bool
+    getter command_recording_on : Bool
 
     def initialize(
       @dynamic_memory : Bytes,
@@ -59,6 +66,12 @@ module Zink
       @call_stack : Array(CallFrame),
       @rng_seed : UInt32?,
       @output : String = "",
+      @arg_count : Int32 = 0,
+      @resume_store_var : UInt8? = nil,
+      @memory_streams : Array(Int32) = [] of Int32,
+      @screen_stream_on : Bool = true,
+      @transcript_on : Bool = false,
+      @command_recording_on : Bool = false,
     )
     end
   end
@@ -84,30 +97,78 @@ module Zink
     @stack : Array(UInt16)
     @locals : Array(UInt16)
     @call_stack : Array(CallFrame)
+    @arg_count : Int32
+    @memory_streams : Array(Int32)
+    @screen_stream_on : Bool
+    @transcript_on : Bool
+    @command_recording_on : Bool
+    @transcript : String
+    @recorded_commands : String
+    @font : UInt16
     @initial_dynamic : Bytes
     @rng_seed : UInt32?
     @save_snapshot : SaveSnapshot?
+    @undo_snapshot : SaveSnapshot?
+    @auxiliary_saves : Hash(String, Bytes)
     @debug : Bool
 
     getter pc : Int32
     getter halted : Bool
+    getter transcript : String
+    getter recorded_commands : String
 
     def initialize(@story : Story, @io : IODevice = BufferIO.new, @debug : Bool = false)
       @memory = @story.memory
       @header = @story.header
+      unless @header.version >= 3_u8 && @header.version <= 5_u8
+        raise FormatError.new("Zink supports Z-machine versions 3, 4, and 5 (got v#{@header.version})")
+      end
+      @io = WindowedIO.new(@io) if @header.version >= 4
       @decoder = TextDecoder.new(@memory, @header)
       @parser = Parser.new(@memory, @header)
       @objects = ObjectTable.new(@memory, @header)
+      initialize_interpreter_header
       @pc = @story.entry_pc
       @halted = false
       @stack = [] of UInt16
       @locals = Array.new(15, 0_u16)
       @call_stack = [] of CallFrame
+      @arg_count = 0
+      @memory_streams = [] of Int32
+      @screen_stream_on = true
+      @transcript_on = (@memory.read_word(0x10) & 1_u16) != 0_u16
+      @command_recording_on = false
+      @transcript = ""
+      @recorded_commands = ""
+      @font = 1_u16
       @initial_dynamic = Bytes.new(@memory.write_limit)
       @memory.bytes[0, @memory.write_limit].copy_to(@initial_dynamic)
       @rng_seed = nil
       @save_snapshot = nil
+      @undo_snapshot = nil
+      @auxiliary_saves = {} of String => Bytes
       @last_read_pc = @story.entry_pc
+    end
+
+    private def initialize_interpreter_header : Nil
+      return if @header.version <= 3
+
+      width = @io.screen_width.clamp(1, 255)
+      height = @io.screen_height.clamp(1, 255)
+      @memory.write_byte(0x1e, 6_u8) # IBM PC interpreter family
+      @memory.write_byte(0x1f, 'A'.ord.to_u8)
+      @memory.write_byte(0x20, height.to_u8)
+      @memory.write_byte(0x21, width.to_u8)
+      if @header.version >= 5
+        @memory.write_word(0x22, width.to_u16)
+        @memory.write_word(0x24, height.to_u16)
+        @memory.write_byte(0x26, 1_u8)
+        @memory.write_byte(0x27, 1_u8)
+        @memory.write_byte(0x2c, 2_u8)
+        @memory.write_byte(0x2d, 9_u8)
+      end
+      flags2 = @memory.read_word(0x10)
+      @memory.write_word(0x10, flags2 & ~0x01e8_u16)
     end
 
     # Address of the most recent sread instruction — used by
@@ -120,7 +181,8 @@ module Zink
       16.upto(255) do |variable_number|
         globals[variable_number.to_u8] = global(variable_number.to_u8)
       end
-      location = globals[16_u8]
+      # Only v1-3 reserve the first global for the status-line location.
+      location = @header.version <= 3 ? globals[16_u8] : 0_u16
       location_name = object_name(location)
 
       objects = [] of WorldObject
@@ -175,6 +237,12 @@ module Zink
         call_stack: snap.call_stack,
         rng_seed: snap.rng_seed,
         output: snap.output,
+        arg_count: snap.arg_count,
+        resume_store_var: snap.resume_store_var,
+        memory_streams: snap.memory_streams,
+        screen_stream_on: snap.screen_stream_on,
+        transcript_on: snap.transcript_on,
+        command_recording_on: snap.command_recording_on,
       )
     end
 
@@ -188,6 +256,11 @@ module Zink
       @stack = snapshot.stack.dup
       @locals = snapshot.locals.dup
       @call_stack = clone_call_stack(snapshot.call_stack)
+      @arg_count = snapshot.arg_count
+      @memory_streams = snapshot.memory_streams.dup
+      @screen_stream_on = snapshot.screen_stream_on
+      @transcript_on = snapshot.transcript_on
+      @command_recording_on = snapshot.command_recording_on
       @rng_seed = snapshot.rng_seed
       @halted = false
     end
@@ -214,6 +287,11 @@ module Zink
       opcode_address = @pc
       opcode = read_next_byte
       debug_log("pc=0x#{opcode_address.to_s(16).rjust(4, '0')} opcode=0x#{opcode.to_s(16).rjust(2, '0')}")
+
+      if opcode == 0xbe_u8 && @header.version >= 5
+        execute_extended(opcode_address)
+        return
+      end
 
       if opcode >= 0xb0 && opcode <= 0xbf
         execute_0op((opcode & 0x0f).to_i)
@@ -251,372 +329,12 @@ module Zink
 
     private def execute_variable_form(opcode : UInt8, opcode_address : Int32) : Nil
       op = (opcode & 0x1f).to_i
-      operands = read_variable_operands
+      double_types = @header.version >= 4 && opcode == 0xec_u8 || @header.version >= 5 && opcode == 0xfa_u8
+      operands = read_variable_operands(double_types)
       if opcode < 0xe0_u8
         execute_2op(op, operands, opcode_address)
       else
         execute_var(op, operands, opcode_address)
-      end
-    end
-
-    private def execute_2op(op : Int32, operands : Array(Operand), opcode_address : Int32) : Nil
-      case op
-      when 1 # je
-        ensure_operand_count(opcode_address, op, operands, 2)
-        left = operand_value(operands[0])
-        match = operands[1..].any? { |candidate| operand_value(candidate) == left }
-        branch = read_branch
-        apply_branch(match, branch)
-      when 2 # jl
-        ensure_operand_count(opcode_address, op, operands, 2)
-        left = signed_word(operand_value(operands[0]))
-        right = signed_word(operand_value(operands[1]))
-        apply_branch(left < right, read_branch)
-      when 3 # jg
-        ensure_operand_count(opcode_address, op, operands, 2)
-        left = signed_word(operand_value(operands[0]))
-        right = signed_word(operand_value(operands[1]))
-        apply_branch(left > right, read_branch)
-      when 4 # dec_chk
-        ensure_operand_count(opcode_address, op, operands, 2)
-        varnum = operand_as_varnum(operands[0], "dec_chk")
-        updated = wrap_u16(signed_word(read_variable(varnum, pop_stack: false)) - 1)
-        assign_variable(varnum, updated)
-        compare_to = signed_word(operand_value(operands[1]))
-        apply_branch(signed_word(updated) < compare_to, read_branch)
-      when 5 # inc_chk
-        ensure_operand_count(opcode_address, op, operands, 2)
-        varnum = operand_as_varnum(operands[0], "inc_chk")
-        updated = wrap_u16(signed_word(read_variable(varnum, pop_stack: false)) + 1)
-        assign_variable(varnum, updated)
-        compare_to = signed_word(operand_value(operands[1]))
-        apply_branch(signed_word(updated) > compare_to, read_branch)
-      when 6 # jin
-        ensure_operand_count(opcode_address, op, operands, 2)
-        object = as_object_number(operand_value(operands[0]), "jin")
-        parent = as_object_number(operand_value(operands[1]), "jin", allow_zero: true)
-        apply_branch(@objects.parent(object).to_u16 == parent, read_branch)
-      when 7 # test
-        ensure_operand_count(opcode_address, op, operands, 2)
-        flags = operand_value(operands[0])
-        mask = operand_value(operands[1])
-        apply_branch((flags & mask) == mask, read_branch)
-      when 8 # or
-        ensure_operand_count(opcode_address, op, operands, 2)
-        left = operand_value(operands[0])
-        right = operand_value(operands[1])
-        store_variable(read_store_variable, (left | right).to_u16)
-      when 9 # and
-        ensure_operand_count(opcode_address, op, operands, 2)
-        left = operand_value(operands[0])
-        right = operand_value(operands[1])
-        store_variable(read_store_variable, (left & right).to_u16)
-      when 10 # test_attr
-        ensure_operand_count(opcode_address, op, operands, 2)
-        object = as_object_number(operand_value(operands[0]), "test_attr")
-        attribute = as_attribute_number(operand_value(operands[1]), "test_attr")
-        apply_branch(@objects.test_attribute(object, attribute), read_branch)
-      when 11 # set_attr
-        ensure_operand_count(opcode_address, op, operands, 2)
-        object = as_object_number(operand_value(operands[0]), "set_attr")
-        attribute = as_attribute_number(operand_value(operands[1]), "set_attr")
-        @objects.set_attribute(object, attribute)
-      when 12 # clear_attr
-        ensure_operand_count(opcode_address, op, operands, 2)
-        object = as_object_number(operand_value(operands[0]), "clear_attr")
-        attribute = as_attribute_number(operand_value(operands[1]), "clear_attr")
-        @objects.clear_attribute(object, attribute)
-      when 13 # store
-        ensure_operand_count(opcode_address, op, operands, 2)
-        varnum = operand_as_varnum(operands[0], "store")
-        value = operand_value(operands[1])
-        store_variable(varnum, value)
-      when 14 # insert_obj
-        ensure_operand_count(opcode_address, op, operands, 2)
-        object = as_object_number(operand_value(operands[0]), "insert_obj")
-        destination = as_object_number(operand_value(operands[1]), "insert_obj")
-        @objects.insert_object(object, destination)
-      when 15 # loadw
-        ensure_operand_count(opcode_address, op, operands, 2)
-        base = operand_value(operands[0]).to_i
-        word_index = operand_value(operands[1]).to_i
-        value = @memory.read_word(base + (word_index * 2))
-        store_variable(read_store_variable, value)
-      when 16 # loadb
-        ensure_operand_count(opcode_address, op, operands, 2)
-        base = operand_value(operands[0]).to_i
-        byte_index = operand_value(operands[1]).to_i
-        value = @memory.read_byte(base + byte_index).to_u16
-        store_variable(read_store_variable, value)
-      when 17 # get_prop
-        ensure_operand_count(opcode_address, op, operands, 2)
-        object = as_object_number(operand_value(operands[0]), "get_prop")
-        property = as_property_number(operand_value(operands[1]), "get_prop")
-        value = @objects.get_property(object, property)
-        store_variable(read_store_variable, value)
-      when 18 # get_prop_addr
-        ensure_operand_count(opcode_address, op, operands, 2)
-        object = as_object_number(operand_value(operands[0]), "get_prop_addr")
-        property = as_property_number(operand_value(operands[1]), "get_prop_addr")
-        value = @objects.get_property_address(object, property)
-        store_variable(read_store_variable, value)
-      when 19 # get_next_prop
-        ensure_operand_count(opcode_address, op, operands, 2)
-        object = as_object_number(operand_value(operands[0]), "get_next_prop")
-        property_raw = operand_value(operands[1])
-        property = property_raw == 0_u16 ? 0_u8 : as_property_number(property_raw, "get_next_prop")
-        value = @objects.get_next_property_number(object, property).to_u16
-        store_variable(read_store_variable, value)
-      when 20 # add
-        ensure_operand_count(opcode_address, op, operands, 2)
-        left = operand_value(operands[0]).to_i
-        right = operand_value(operands[1]).to_i
-        store_variable(read_store_variable, wrap_u16(left + right))
-      when 21 # sub
-        ensure_operand_count(opcode_address, op, operands, 2)
-        left = operand_value(operands[0]).to_i
-        right = operand_value(operands[1]).to_i
-        store_variable(read_store_variable, wrap_u16(left - right))
-      when 22 # mul
-        ensure_operand_count(opcode_address, op, operands, 2)
-        left = signed_word(operand_value(operands[0]))
-        right = signed_word(operand_value(operands[1]))
-        store_variable(read_store_variable, wrap_u16(left * right))
-      when 23 # div
-        ensure_operand_count(opcode_address, op, operands, 2)
-        divisor = signed_word(operand_value(operands[1]))
-        raise RuntimeError.new("Division by zero") if divisor == 0
-        dividend = signed_word(operand_value(operands[0]))
-        store_variable(read_store_variable, wrap_u16(dividend // divisor))
-      when 24 # mod
-        ensure_operand_count(opcode_address, op, operands, 2)
-        divisor = signed_word(operand_value(operands[1]))
-        raise RuntimeError.new("Division by zero") if divisor == 0
-        dividend = signed_word(operand_value(operands[0]))
-        store_variable(read_store_variable, wrap_u16(dividend % divisor))
-      when 25 # call_2s
-        ensure_operand_count(opcode_address, op, operands, 2)
-        routine_packed = operand_value(operands[0])
-        arg1 = operand_value(operands[1])
-        call_routine(routine_packed, [arg1], read_store_variable)
-      when 26 # call_2n
-        ensure_operand_count(opcode_address, op, operands, 2)
-        routine_packed = operand_value(operands[0])
-        arg1 = operand_value(operands[1])
-        call_routine(routine_packed, [arg1], nil)
-      else
-        raise UnsupportedInstructionError.new("Unsupported 2OP opcode #{op} at 0x#{opcode_address.to_s(16)}")
-      end
-    end
-
-    private def execute_1op(op : Int32, operand : Operand, opcode_address : Int32) : Nil
-      case op
-      when 0 # jz
-        branch = read_branch
-        apply_branch(operand_value(operand) == 0_u16, branch)
-      when 1 # get_sibling
-        object = as_object_number(operand_value(operand), "get_sibling")
-        sibling = @objects.sibling(object)
-        store_variable(read_store_variable, sibling.to_u16)
-        apply_branch(sibling != 0_u8, read_branch)
-      when 2 # get_child
-        object = as_object_number(operand_value(operand), "get_child")
-        child = @objects.child(object)
-        store_variable(read_store_variable, child.to_u16)
-        apply_branch(child != 0_u8, read_branch)
-      when 3 # get_parent
-        object = as_object_number(operand_value(operand), "get_parent")
-        parent = @objects.parent(object)
-        store_variable(read_store_variable, parent.to_u16)
-      when 4 # get_prop_len
-        prop_addr = operand_value(operand)
-        length = @objects.property_length(prop_addr)
-        store_variable(read_store_variable, length.to_u16)
-      when 7 # print_addr
-        address = operand_value(operand).to_i
-        text, _next_pc = @decoder.decode_zstring_at(address)
-        @io.write(text)
-      when 8 # call_1s
-        routine_packed = operand_value(operand)
-        call_routine(routine_packed, [] of UInt16, read_store_variable)
-      when 9 # remove_obj
-        object = as_object_number(operand_value(operand), "remove_obj")
-        @objects.remove_object(object)
-      when 10 # print_obj
-        object = as_object_number(operand_value(operand), "print_obj")
-        if @objects.short_name_word_count(object) > 0_u8
-          text, _next_pc = @decoder.decode_zstring_at(@objects.short_name_address(object).to_i)
-          @io.write(text)
-        end
-      when 5 # inc
-        varnum = operand_as_varnum(operand, "inc")
-        current = read_variable(varnum, pop_stack: false)
-        assign_variable(varnum, wrap_u16(current.to_i + 1))
-      when 6 # dec
-        varnum = operand_as_varnum(operand, "dec")
-        current = read_variable(varnum, pop_stack: false)
-        assign_variable(varnum, wrap_u16(current.to_i - 1))
-      when 12 # jump
-        offset = signed_word(operand_value(operand))
-        @pc += offset - 2
-      when 13 # print_paddr
-        packed = operand_value(operand)
-        address = @header.unpack_address(packed)
-        text, _next_pc = @decoder.decode_zstring_at(address)
-        @io.write(text)
-      when 14 # load
-        varnum = operand_as_varnum(operand, "load")
-        value = read_variable(varnum, pop_stack: false)
-        store_variable(read_store_variable, value)
-      when 15 # not
-        value = operand_value(operand)
-        store_variable(read_store_variable, (~value).to_u16)
-      when 11 # ret
-        return_from_routine(operand_value(operand))
-      else
-        raise UnsupportedInstructionError.new("Unsupported 1OP opcode #{op} at 0x#{opcode_address.to_s(16)}")
-      end
-    end
-
-    private def execute_var(op : Int32, operands : Array(Operand), opcode_address : Int32) : Nil
-      case op
-      when 0 # call_vs
-        ensure_operand_count(opcode_address, op, operands, 1)
-        routine_packed = operand_value(operands[0])
-        args = operands[1..].map { |operand| operand_value(operand) }
-        call_routine(routine_packed, args, read_store_variable)
-      when 1 # storew
-        ensure_operand_count(opcode_address, op, operands, 3)
-        array = operand_value(operands[0]).to_i
-        word_index = operand_value(operands[1]).to_i
-        value = operand_value(operands[2])
-        @memory.write_word(array + (word_index * 2), value)
-      when 2 # storeb
-        ensure_operand_count(opcode_address, op, operands, 3)
-        array = operand_value(operands[0]).to_i
-        byte_index = operand_value(operands[1]).to_i
-        value = operand_value(operands[2])
-        @memory.write_byte(array + byte_index, (value & 0xff).to_u8)
-      when 3 # put_prop
-        ensure_operand_count(opcode_address, op, operands, 3)
-        object = as_object_number(operand_value(operands[0]), "put_prop")
-        property = as_property_number(operand_value(operands[1]), "put_prop")
-        value = operand_value(operands[2])
-        @objects.put_property(object, property, value)
-      when 4 # sread/read
-        ensure_operand_count(opcode_address, op, operands, 2)
-        text_buffer = operand_value(operands[0])
-        parse_buffer = operand_value(operands[1])
-        @last_read_pc = opcode_address
-        line = @io.read_line
-        unless line
-          debug_log("input EOF, halting session")
-          @halted = true
-          return
-        end
-        @parser.read_into_buffers(line, text_buffer, parse_buffer)
-      when 5 # print_char
-        ensure_operand_count(opcode_address, op, operands, 1)
-        zscii = operand_value(operands[0]).to_i
-        @io.write(zscii_to_string(zscii))
-      when 6 # print_num
-        ensure_operand_count(opcode_address, op, operands, 1)
-        value = signed_word(operand_value(operands[0]))
-        @io.write(value.to_s)
-      when 7 # random
-        ensure_operand_count(opcode_address, op, operands, 1)
-        range = signed_word(operand_value(operands[0]))
-        value =
-          if range > 0
-            random_in_range(range)
-          elsif range < 0
-            @rng_seed = (-range).to_u32
-            debug_log("random seed set to #{@rng_seed}")
-            0_u16
-          else
-            @rng_seed = nil
-            debug_log("random seed cleared")
-            0_u16
-          end
-        store_variable(read_store_variable, value)
-      when 8 # push
-        ensure_operand_count(opcode_address, op, operands, 1)
-        @stack << operand_value(operands[0])
-      when 9 # pull
-        ensure_operand_count(opcode_address, op, operands, 1)
-        varnum = operand_as_varnum(operands[0], "pull")
-        store_variable(varnum, pop_stack)
-      else
-        raise UnsupportedInstructionError.new("Unsupported VAR opcode #{op} at 0x#{opcode_address.to_s(16)}")
-      end
-    end
-
-    private def ensure_operand_count(
-      opcode_address : Int32,
-      opcode_number : Int32,
-      operands : Array(Operand),
-      min_count : Int32,
-    ) : Nil
-      return if operands.size >= min_count
-
-      raise UnsupportedInstructionError.new(
-        "Opcode #{opcode_number} at 0x#{opcode_address.to_s(16)} expected #{min_count} operands, got #{operands.size}"
-      )
-    end
-
-    private def execute_0op(op : Int32) : Nil
-      case op
-      when 0 # rtrue
-        return_from_routine(1_u16)
-      when 1 # rfalse
-        return_from_routine(0_u16)
-      when 2 # print
-        text, next_pc = @decoder.decode_zstring_at(@pc)
-        @pc = next_pc
-        @io.write(text)
-      when 3 # print_ret
-        text, next_pc = @decoder.decode_zstring_at(@pc)
-        @pc = next_pc
-        @io.write(text)
-        @io.write("\n")
-        return_from_routine(1_u16)
-      when 4 # nop
-        nil
-      when 5 # save
-        if @header.version <= 3
-          branch = read_branch
-          @save_snapshot = capture_save_snapshot
-          debug_log("save snapshot captured")
-          apply_branch(true, branch)
-        else
-          raise UnsupportedInstructionError.new("save is only implemented for v1-3")
-        end
-      when 6 # restore
-        if @header.version <= 3
-          _branch = read_branch
-          restore_from_snapshot
-          debug_log("restore attempted")
-        else
-          raise UnsupportedInstructionError.new("restore is only implemented for v1-3")
-        end
-      when 7 # restart
-        debug_log("restart")
-        restart_vm
-      when 8 # ret_popped
-        return_from_routine(pop_stack)
-      when 9 # pop
-        pop_stack
-      when 10 # quit
-        @halted = true
-      when 11 # new_line
-        @io.write("\n")
-      when 12 # show_status
-        # Status line rendering is a UI concern; no-op in this interpreter.
-        nil
-      when 13 # verify
-        apply_branch(@story.checksum_valid?, read_branch)
-      else
-        raise UnsupportedInstructionError.new("Unsupported 0OP opcode #{op} at 0x#{(@pc - 1).to_s(16)}")
       end
     end
 
@@ -633,15 +351,18 @@ module Zink
       end
     end
 
-    private def read_variable_operands : Array(Operand)
-      type_spec = read_next_byte
+    private def read_variable_operands(double_types : Bool = false) : Array(Operand)
+      type_specs = [read_next_byte]
+      type_specs << read_next_byte if double_types
       operands = [] of Operand
-      {6, 4, 2, 0}.each do |shift|
-        code = ((type_spec >> shift) & 0x03).to_i
-        break if code == 0x03
+      type_specs.each do |type_spec|
+        {6, 4, 2, 0}.each do |shift|
+          code = ((type_spec >> shift) & 0x03).to_i
+          break if code == 0x03
 
-        operand_type = short_operand_type(code)
-        operands << read_operand(operand_type)
+          operand_type = short_operand_type(code)
+          operands << read_operand(operand_type)
+        end
       end
       operands
     end
@@ -669,27 +390,29 @@ module Zink
     end
 
     private def operand_as_varnum(operand : Operand, op_name : String) : UInt8
-      if operand.raw > 0xff_u16
-        raise UnsupportedInstructionError.new("Invalid variable number for #{op_name}: #{operand.raw}")
+      value = operand_value(operand)
+      if value > 0xff_u16
+        raise UnsupportedInstructionError.new("Invalid variable number for #{op_name}: #{value}")
       end
-      operand.raw.to_u8
+      value.to_u8
     end
 
     private def as_object_number(value : UInt16, op_name : String, allow_zero : Bool = false) : UInt16
       return 0_u16 if allow_zero && value == 0_u16
-      return value if value >= 1_u16 && value <= 255_u16
+      maximum = @header.version <= 3 ? 255_u16 : 65535_u16
+      return value if value >= 1_u16 && value <= maximum
       raise UnsupportedInstructionError.new("Invalid object number for #{op_name}: #{value}")
     end
 
     private def as_attribute_number(value : UInt16, op_name : String) : UInt8
-      if value <= 31_u16
+      if value < @objects.attribute_count
         return value.to_u8
       end
       raise UnsupportedInstructionError.new("Invalid attribute number for #{op_name}: #{value}")
     end
 
     private def as_property_number(value : UInt16, op_name : String) : UInt8
-      if value >= 1_u16 && value <= 31_u16
+      if value >= 1_u16 && value <= @objects.default_property_count
         return value.to_u8
       end
       raise UnsupportedInstructionError.new("Invalid property number for #{op_name}: #{value}")
@@ -808,10 +531,12 @@ module Zink
         return_pc: @pc,
         store_variable: store_var,
         locals: @locals,
-        stack_base: @stack.size
+        stack_base: @stack.size,
+        arg_count: @arg_count
       )
 
       @locals = new_locals
+      @arg_count = args.size
       @pc = cursor
     end
 
@@ -842,7 +567,7 @@ module Zink
       (Random.rand(range) + 1).to_u16
     end
 
-    private def capture_save_snapshot : SaveSnapshot
+    private def capture_save_snapshot(resume_store_var : UInt8? = nil) : SaveSnapshot
       dynamic = Bytes.new(@memory.write_limit)
       @memory.bytes[0, @memory.write_limit].copy_to(dynamic)
       SaveSnapshot.new(
@@ -853,6 +578,12 @@ module Zink
         call_stack: clone_call_stack(@call_stack),
         rng_seed: @rng_seed,
         output: @io.output_text,
+        arg_count: @arg_count,
+        resume_store_var: resume_store_var,
+        memory_streams: @memory_streams.dup,
+        screen_stream_on: @screen_stream_on,
+        transcript_on: @transcript_on,
+        command_recording_on: @command_recording_on,
       )
     end
 
@@ -860,12 +591,20 @@ module Zink
       snapshot = @save_snapshot
       return unless snapshot
 
+      restore_snapshot(snapshot)
+    end
+
+    private def restore_snapshot(snapshot : SaveSnapshot) : Nil
+      current_flags = @memory.read_word(0x10) & 0x0003_u16
       snapshot.dynamic_memory.copy_to(@memory.bytes.to_slice[0, @memory.write_limit])
+      saved_flags = @memory.read_word(0x10)
+      @memory.write_word(0x10, (saved_flags & ~0x0003_u16) | current_flags)
       @pc = snapshot.pc
       @stack = snapshot.stack.dup
       @locals = snapshot.locals.dup
       @call_stack = clone_call_stack(snapshot.call_stack)
-      @rng_seed = snapshot.rng_seed
+      @arg_count = snapshot.arg_count
+      @transcript_on = (current_flags & 1_u16) != 0_u16
       @halted = false
     end
 
@@ -875,17 +614,28 @@ module Zink
           return_pc: frame.return_pc,
           store_variable: frame.store_variable,
           locals: frame.locals.dup,
-          stack_base: frame.stack_base
+          stack_base: frame.stack_base,
+          arg_count: frame.arg_count
         )
       end
     end
 
     private def restart_vm : Nil
+      preserved_flags = @memory.read_word(0x10) & 0x0003_u16
       @initial_dynamic.copy_to(@memory.bytes.to_slice[0, @memory.write_limit])
+      initial_flags = @memory.read_word(0x10)
+      @memory.write_word(0x10, (initial_flags & ~0x0003_u16) | preserved_flags)
       @pc = @story.entry_pc
       @stack.clear
       @locals = Array.new(15, 0_u16)
       @call_stack.clear
+      @arg_count = 0
+      @memory_streams.clear
+      @screen_stream_on = true
+      @transcript_on = (preserved_flags & 1_u16) != 0_u16
+      @command_recording_on = false
+      @font = 1_u16
+      @io.erase_window(-1)
       @halted = false
     end
 
@@ -893,6 +643,33 @@ module Zink
       return "\n" if zscii == 13
       return zscii.chr.to_s if zscii >= 32 && zscii <= 126
       "?"
+    end
+
+    private def write_output(text : String) : Nil
+      @transcript_on = (@memory.read_word(0x10) & 1_u16) != 0_u16
+      if table = @memory_streams.last?
+        text.each_char do |char|
+          length = @memory.read_word(table).to_i
+          code = char == '\n' ? 13 : char.ord
+          code = '?'.ord if code > 255
+          @memory.write_byte(table + 2 + length, code.to_u8)
+          @memory.write_word(table, (length + 1).to_u16)
+        end
+      elsif @screen_stream_on
+        @io.write(text)
+      end
+      @transcript += text if @memory_streams.empty? && @transcript_on
+    end
+
+    private def set_transcript_flag(enabled : Bool) : Nil
+      flags = @memory.read_word(0x10)
+      @memory.write_word(0x10, enabled ? (flags | 1_u16) : (flags & ~1_u16))
+    end
+
+    private def auxiliary_name(address : UInt16) : String
+      return "" if address == 0_u16
+      length = @memory.read_byte(address).to_i
+      String.new(@memory.bytes[address.to_i + 1, length])
     end
 
     private def debug_log(message : String) : Nil
@@ -912,6 +689,7 @@ module Zink
       end
 
       @locals = frame.locals
+      @arg_count = frame.arg_count
       @pc = frame.return_pc
       if store_var = frame.store_variable
         store_variable(store_var, value)

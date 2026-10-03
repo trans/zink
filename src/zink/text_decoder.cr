@@ -5,6 +5,7 @@ module Zink
     A2 = " ^0123456789.,!?_#'\"/\\-:()"
 
     def initialize(@memory : Memory, @header : Header)
+      @alphabet_table_address = @header.version >= 5 ? @memory.read_word(0x34).to_i : 0
     end
 
     def decode_zstring_at(address : Int32, depth : Int32 = 0) : {String, Int32}
@@ -72,7 +73,8 @@ module Zink
 
       entry_address = table_addr + (index * 2)
       packed = @memory.read_word(entry_address)
-      expanded_addr = @header.unpack_address(packed)
+      # Abbreviation entries are word addresses in every version.
+      expanded_addr = packed.to_i * 2
       text, _next_pc = decode_zstring_at(expanded_addr, depth)
       text
     end
@@ -84,6 +86,11 @@ module Zink
       return '\n' if alphabet == 2 && zchar == 7
 
       index = zchar - 6
+      if @alphabet_table_address != 0
+        code = @memory.read_byte(@alphabet_table_address + alphabet * 26 + index).to_i
+        return zscii_to_char(code)
+      end
+
       source =
         case alphabet
         when 0

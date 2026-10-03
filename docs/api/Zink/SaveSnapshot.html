@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Crystal Docs 1.19.1">
+<meta name="generator" content="Crystal Docs 1.21.1">
 <meta name="crystal_docs.project_version" content="main-dev">
 <meta name="crystal_docs.project_name" content="zink">
 
@@ -152,6 +152,11 @@
       
     </li>
   
+  <li class=" " data-id="zink/Zink/WindowedIO" data-name="zink::windowedio">
+      <a href="../Zink/WindowedIO.html">WindowedIO</a>
+
+    </li>
+
   <li class=" " data-id="zink/Zink/WorldObject" data-name="zink::worldobject">
       <a href="../Zink/WorldObject.html">WorldObject</a>
       
@@ -248,7 +253,7 @@
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#new%28dynamic_memory%3ABytes%2Cpc%3AInt32%2Cstack%3AArray%28UInt16%29%2Clocals%3AArray%28UInt16%29%2Ccall_stack%3AArray%28CallFrame%29%2Crng_seed%3AUInt32%7CNil%2Coutput%3AString%3D%22%22%29-class-method" class="signature"><strong>.new</strong>(dynamic_memory : Bytes, pc : Int32, stack : Array(UInt16), locals : Array(UInt16), call_stack : Array(CallFrame), rng_seed : UInt32 | Nil, output : String = <span class="s">&quot;&quot;</span>)</a>
+        <a href="#new%28dynamic_memory%3ABytes%2Cpc%3AInt32%2Cstack%3AArray%28UInt16%29%2Clocals%3AArray%28UInt16%29%2Ccall_stack%3AArray%28CallFrame%29%2Crng_seed%3AUInt32%7CNil%2Coutput%3AString%3D%22%22%2Carg_count%3AInt32%3D0%2Cresume_store_var%3AUInt8%7CNil%3Dnil%2Cmemory_streams%3AArray%28Int32%29%3D%5B%5DofInt32%2Cscreen_stream_on%3ABool%3Dtrue%2Ctranscript_on%3ABool%3Dfalse%2Ccommand_recording_on%3ABool%3Dfalse%29-class-method" class="signature"><strong>.new</strong>(dynamic_memory : Bytes, pc : Int32, stack : Array(UInt16), locals : Array(UInt16), call_stack : Array(CallFrame), rng_seed : UInt32 | Nil, output : String = <span class="s">&quot;&quot;</span>, arg_count : Int32 = <span class="n">0</span>, resume_store_var : UInt8 | Nil = <span class="n">nil</span>, memory_streams : Array(Int32) = <span class="o">[]</span> <span class="k">of</span> <span class="t">Int32</span>, screen_stream_on : Bool = <span class="n">true</span>, transcript_on : Bool = <span class="n">false</span>, command_recording_on : Bool = <span class="n">false</span>)</a>
         
       </li>
     
@@ -281,10 +286,20 @@
   <ul class="list-summary">
     
       <li class="entry-summary">
+        <a href="#arg_count%3AInt32-instance-method" class="signature"><strong>#arg_count</strong> : Int32</a>
+
+      </li>
+
+      <li class="entry-summary">
         <a href="#call_stack%3AArray%28CallFrame%29-instance-method" class="signature"><strong>#call_stack</strong> : Array(CallFrame)</a>
         
       </li>
     
+      <li class="entry-summary">
+        <a href="#command_recording_on%3ABool-instance-method" class="signature"><strong>#command_recording_on</strong> : Bool</a>
+
+      </li>
+
       <li class="entry-summary">
         <a href="#dynamic_memory%3ABytes-instance-method" class="signature"><strong>#dynamic_memory</strong> : Bytes</a>
         
@@ -296,6 +311,11 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#memory_streams%3AArray%28Int32%29-instance-method" class="signature"><strong>#memory_streams</strong> : Array(Int32)</a>
+
+      </li>
+
+      <li class="entry-summary">
         <a href="#output%3AString-instance-method" class="signature"><strong>#output</strong> : String</a>
         
       </li>
@@ -306,15 +326,30 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#resume_store_var%3AUInt8%7CNil-instance-method" class="signature"><strong>#resume_store_var</strong> : UInt8 | Nil</a>
+
+      </li>
+
+      <li class="entry-summary">
         <a href="#rng_seed%3AUInt32%7CNil-instance-method" class="signature"><strong>#rng_seed</strong> : UInt32 | Nil</a>
         
       </li>
     
       <li class="entry-summary">
+        <a href="#screen_stream_on%3ABool-instance-method" class="signature"><strong>#screen_stream_on</strong> : Bool</a>
+
+      </li>
+
+      <li class="entry-summary">
         <a href="#stack%3AArray%28UInt16%29-instance-method" class="signature"><strong>#stack</strong> : Array(UInt16)</a>
         
       </li>
     
+      <li class="entry-summary">
+        <a href="#transcript_on%3ABool-instance-method" class="signature"><strong>#transcript_on</strong> : Bool</a>
+
+      </li>
+
   </ul>
 
 
@@ -385,12 +420,12 @@
     Constructor Detail
   </h2>
   
-    <div class="entry-detail" id="new(dynamic_memory:Bytes,pc:Int32,stack:Array(UInt16),locals:Array(UInt16),call_stack:Array(CallFrame),rng_seed:UInt32|Nil,output:String=&quot;&quot;)-class-method">
+    <div class="entry-detail" id="new(dynamic_memory:Bytes,pc:Int32,stack:Array(UInt16),locals:Array(UInt16),call_stack:Array(CallFrame),rng_seed:UInt32|Nil,output:String=&quot;&quot;,arg_count:Int32=0,resume_store_var:UInt8|Nil=nil,memory_streams:Array(Int32)=[]ofInt32,screen_stream_on:Bool=true,transcript_on:Bool=false,command_recording_on:Bool=false)-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(dynamic_memory : Bytes, pc : Int32, stack : Array(UInt16), locals : Array(UInt16), call_stack : Array(<a href="../Zink/CallFrame.html">CallFrame</a>), rng_seed : UInt32 | Nil, output : String = <span class="s">&quot;&quot;</span>)
+        def self.<strong>new</strong>(dynamic_memory : Bytes, pc : Int32, stack : Array(UInt16), locals : Array(UInt16), call_stack : Array(<a href="../Zink/CallFrame.html">CallFrame</a>), rng_seed : UInt32 | Nil, output : String = <span class="s">&quot;&quot;</span>, arg_count : Int32 = <span class="n">0</span>, resume_store_var : UInt8 | Nil = <span class="n">nil</span>, memory_streams : Array(Int32) = <span class="o">[]</span> <span class="k">of</span> <span class="t">Int32</span>, screen_stream_on : Bool = <span class="n">true</span>, transcript_on : Bool = <span class="n">false</span>, command_recording_on : Bool = <span class="n">false</span>)
 
-        <a class="method-permalink" href="#new%28dynamic_memory%3ABytes%2Cpc%3AInt32%2Cstack%3AArray%28UInt16%29%2Clocals%3AArray%28UInt16%29%2Ccall_stack%3AArray%28CallFrame%29%2Crng_seed%3AUInt32%7CNil%2Coutput%3AString%3D%22%22%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28dynamic_memory%3ABytes%2Cpc%3AInt32%2Cstack%3AArray%28UInt16%29%2Clocals%3AArray%28UInt16%29%2Ccall_stack%3AArray%28CallFrame%29%2Crng_seed%3AUInt32%7CNil%2Coutput%3AString%3D%22%22%2Carg_count%3AInt32%3D0%2Cresume_store_var%3AUInt8%7CNil%3Dnil%2Cmemory_streams%3AArray%28Int32%29%3D%5B%5DofInt32%2Cscreen_stream_on%3ABool%3Dtrue%2Ctranscript_on%3ABool%3Dfalse%2Ccommand_recording_on%3ABool%3Dfalse%29-class-method">#</a>
       </div>
       
       <br/>
@@ -443,6 +478,20 @@
     Instance Method Detail
   </h2>
   
+    <div class="entry-detail" id="arg_count:Int32-instance-method">
+      <div class="signature">
+
+        def <strong>arg_count</strong> : Int32
+
+        <a class="method-permalink" href="#arg_count%3AInt32-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="call_stack:Array(CallFrame)-instance-method">
       <div class="signature">
         
@@ -457,6 +506,20 @@
       </div>
     </div>
   
+    <div class="entry-detail" id="command_recording_on:Bool-instance-method">
+      <div class="signature">
+
+        def <strong>command_recording_on</strong> : Bool
+
+        <a class="method-permalink" href="#command_recording_on%3ABool-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="dynamic_memory:Bytes-instance-method">
       <div class="signature">
         
@@ -485,6 +548,20 @@
       </div>
     </div>
   
+    <div class="entry-detail" id="memory_streams:Array(Int32)-instance-method">
+      <div class="signature">
+
+        def <strong>memory_streams</strong> : Array(Int32)
+
+        <a class="method-permalink" href="#memory_streams%3AArray%28Int32%29-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="output:String-instance-method">
       <div class="signature">
         
@@ -513,6 +590,20 @@
       </div>
     </div>
   
+    <div class="entry-detail" id="resume_store_var:UInt8|Nil-instance-method">
+      <div class="signature">
+
+        def <strong>resume_store_var</strong> : UInt8 | Nil
+
+        <a class="method-permalink" href="#resume_store_var%3AUInt8%7CNil-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="rng_seed:UInt32|Nil-instance-method">
       <div class="signature">
         
@@ -527,6 +618,20 @@
       </div>
     </div>
   
+    <div class="entry-detail" id="screen_stream_on:Bool-instance-method">
+      <div class="signature">
+
+        def <strong>screen_stream_on</strong> : Bool
+
+        <a class="method-permalink" href="#screen_stream_on%3ABool-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="stack:Array(UInt16)-instance-method">
       <div class="signature">
         
@@ -541,6 +646,20 @@
       </div>
     </div>
   
+    <div class="entry-detail" id="transcript_on:Bool-instance-method">
+      <div class="signature">
+
+        def <strong>transcript_on</strong> : Bool
+
+        <a class="method-permalink" href="#transcript_on%3ABool-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
 
 
 

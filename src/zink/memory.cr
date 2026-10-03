@@ -29,8 +29,10 @@ module Zink
     end
 
     def write_word(address : Int, value : UInt16) : Nil
-      write_byte(address, ((value >> 8) & 0xff).to_u8)
-      write_byte(address + 1, (value & 0xff).to_u8)
+      bounds_check_write(address)
+      bounds_check_write(address + 1)
+      @bytes[address] = ((value >> 8) & 0xff).to_u8
+      @bytes[address + 1] = (value & 0xff).to_u8
     end
 
     private def bounds_check(address : Int) : Nil

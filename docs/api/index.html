@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Crystal Docs 1.19.1">
+<meta name="generator" content="Crystal Docs 1.21.1">
 <meta name="crystal_docs.project_version" content="main-dev">
 <meta name="crystal_docs.project_name" content="zink">
 
@@ -152,6 +152,11 @@
       
     </li>
   
+  <li class=" " data-id="zink/Zink/WindowedIO" data-name="zink::windowedio">
+      <a href="Zink/WindowedIO.html">WindowedIO</a>
+
+    </li>
+
   <li class=" " data-id="zink/Zink/WorldObject" data-name="zink::worldobject">
       <a href="Zink/WorldObject.html">WorldObject</a>
       
@@ -174,7 +179,64 @@
 
 
 <div class="main-content">
-
+<h1><a id="zink" class="anchor" href="#zink">  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Zink</h1>
+<p>Zink is a Crystal interpreter for Z-machine text adventures. It runs text-mode
+version 3, 4, and 5 story files and exposes a JSON view of the object tree and
+globals.</p>
+<h2><a id="run" class="anchor" href="#run">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Run</h2>
+<p>Requires Crystal 1.19.1 or newer.</p>
+<pre><code class="language-sh">crystal run src/main.cr -- path/to/story.z5</code></pre>
+<p>Or build an executable with <code>just build</code> and run <code>bin/zink path/to/story.z5</code>.
+Use <code>--worldview</code> to boot a story, submit <code>look</code>, and print its state as JSON.
+Use <code>--record-actions FILE</code> to record input lines. <code>--debug</code> prints VM instruction
+addresses to standard error.</p>
+<pre><code class="language-sh">crystal spec</code></pre>
+<h2><a id="state-api" class="anchor" href="#state-api">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>State API</h2>
+<p><code>Zink::VM#worldview</code> returns a snapshot of the objects and all 240 global
+variables. <code>Worldview#globals</code> is keyed by Z-machine variable number (16–255).
+Each <code>WorldObject#property_bytes</code> entry contains the complete property data;
+<code>properties</code> retains the one-byte or first-word values. The <code>location</code> field
+uses global 16 in version 3. Later versions do not reserve a location global,
+so their <code>location</code> field is zero.</p>
+<p><code>VM#export_save</code> and <code>VM#import_save</code> transfer execution state. The snapshot is
+JSON serializable. <code>VM#export_save_for_persistence</code> rewinds to the latest input
+instruction so a restored session can wait for a new command.</p>
+<h2><a id="code-layout" class="anchor" href="#code-layout">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Code layout</h2>
+<ul>
+<li><code>Memory</code>, <code>Header</code>, and <code>Story</code> own story bytes and file metadata.</li>
+<li><code>ObjectTable</code>, <code>TextDecoder</code>, and <code>Parser</code> handle version-dependent data.</li>
+<li><code>VM</code> owns execution state. Opcode groups live in <code>src/zink/vm/</code>.</li>
+<li><code>IODevice</code> handles host input and output. <code>WindowedIO</code> renders the upper
+Z-machine window as readable rows on a linear text device.</li>
+</ul>
+<h2><a id="current-limits" class="anchor" href="#current-limits">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Current limits</h2>
+<p>Zink advertises no colour, sound, graphics, mouse, or timed-input capability.
+Transcript and command-file streams are available through <code>VM#transcript</code> and
+<code>VM#recorded_commands</code>; Zink does not write those streams to files. Extended
+ZSCII character mapping and true single-key terminal input are not implemented;
+for <code>read_char</code>, type a key followed by Enter. Save/restore and auxiliary saves
+use memory within a running VM; an application can persist snapshots through the
+state API above. Version 4 has synthetic opcode tests, but no real v4 story has
+been exercised yet.</p>
 </div>
 </body>
 </html>

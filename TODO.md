@@ -47,7 +47,11 @@ section 3.1). Two things it would need from zink:
 
 ## v4/v5 support
 
+Text-mode v4/v5 execution added 2026-10-03. The Solid Gold Zork I v5 story
+boots, accepts commands, saves/restores, and opens InvisiClues. Optional
+interpreter features still to implement are listed in README.md.
+
 infocomic has the Solid Gold edition of Zork I
 (`stories/zork1-invclues-r52-s871125.z5`, release 52, 1987), Zork I with
-Infocom's InvisiClues built in (the `HINT` command). It's v5; zink runs v3
-only.
+Infocom's InvisiClues built in (the `HINT` command). This story prompted the
+v5 work.

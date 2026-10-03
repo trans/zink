@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Crystal Docs 1.19.1">
+<meta name="generator" content="Crystal Docs 1.21.1">
 <meta name="crystal_docs.project_version" content="main-dev">
 <meta name="crystal_docs.project_name" content="zink">
 
@@ -152,6 +152,11 @@
       
     </li>
   
+  <li class=" " data-id="zink/Zink/WindowedIO" data-name="zink::windowedio">
+      <a href="../Zink/WindowedIO.html">WindowedIO</a>
+
+    </li>
+
   <li class=" " data-id="zink/Zink/WorldObject" data-name="zink::worldobject">
       <a href="../Zink/WorldObject.html">WorldObject</a>
       
@@ -220,35 +225,6 @@
 
 
 
-  
-    <h2>
-      <a id="constant-summary" class="anchor" href="#constant-summary">
-  <svg class="octicon-link" aria-hidden="true">
-    <use href="#octicon-link"/>
-  </svg>
-</a>
-      Constant Summary
-    </h2>
-  
-  <dl>
-    
-      <dt class="entry-const" id="ATTRIBUTE_COUNT">
-        <strong>ATTRIBUTE_COUNT</strong> = <code><span class="n">32</span></code>
-      </dt>
-      
-    
-      <dt class="entry-const" id="DEFAULT_PROPERTY_COUNT">
-        <strong>DEFAULT_PROPERTY_COUNT</strong> = <code><span class="n">31</span></code>
-      </dt>
-      
-    
-      <dt class="entry-const" id="OBJECT_ENTRY_SIZE">
-        <strong>OBJECT_ENTRY_SIZE</strong> = <code><span class="n">9</span></code>
-      </dt>
-      
-    
-  </dl>
-
 
 
   
@@ -296,7 +272,19 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#child%28object_number%3AUInt16%29%3AUInt8-instance-method" class="signature"><strong>#child</strong>(object_number : UInt16) : UInt8</a>
+        <a href="#all_property_bytes%28object_number%3AUInt16%29%3AHash%28UInt8%2CArray%28UInt8%29%29-instance-method" class="signature"><strong>#all_property_bytes</strong>(object_number : UInt16) : Hash(UInt8, Array(UInt8))</a>
+
+          <div class="summary"><p>Return every byte of each property, including values longer than a word.</p></div>
+
+      </li>
+
+      <li class="entry-summary">
+        <a href="#attribute_count%3AInt32-instance-method" class="signature"><strong>#attribute_count</strong> : Int32</a>
+
+      </li>
+
+      <li class="entry-summary">
+        <a href="#child%28object_number%3AUInt16%29%3AUInt16-instance-method" class="signature"><strong>#child</strong>(object_number : UInt16) : UInt16</a>
         
       </li>
     
@@ -310,6 +298,11 @@
         
       </li>
     
+      <li class="entry-summary">
+        <a href="#default_property_count%3AInt32-instance-method" class="signature"><strong>#default_property_count</strong> : Int32</a>
+
+      </li>
+
       <li class="entry-summary">
         <a href="#get_next_property_number%28object_number%3AUInt16%2Cproperty_number%3AUInt8%29%3AUInt8-instance-method" class="signature"><strong>#get_next_property_number</strong>(object_number : UInt16, property_number : UInt8) : UInt8</a>
         
@@ -331,7 +324,17 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#parent%28object_number%3AUInt16%29%3AUInt8-instance-method" class="signature"><strong>#parent</strong>(object_number : UInt16) : UInt8</a>
+        <a href="#object_count%3AInt32-instance-method" class="signature"><strong>#object_count</strong> : Int32</a>
+
+      </li>
+
+      <li class="entry-summary">
+        <a href="#object_entry_size%3AInt32-instance-method" class="signature"><strong>#object_entry_size</strong> : Int32</a>
+
+      </li>
+
+      <li class="entry-summary">
+        <a href="#parent%28object_number%3AUInt16%29%3AUInt16-instance-method" class="signature"><strong>#parent</strong>(object_number : UInt16) : UInt16</a>
         
       </li>
     
@@ -361,17 +364,17 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#set_child%28object_number%3AUInt16%2Cvalue%3AUInt8%29%3ANil-instance-method" class="signature"><strong>#set_child</strong>(object_number : UInt16, value : UInt8) : Nil</a>
+        <a href="#set_child%28object_number%3AUInt16%2Cvalue%3AUInt16%29%3ANil-instance-method" class="signature"><strong>#set_child</strong>(object_number : UInt16, value : UInt16) : Nil</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#set_parent%28object_number%3AUInt16%2Cvalue%3AUInt8%29%3ANil-instance-method" class="signature"><strong>#set_parent</strong>(object_number : UInt16, value : UInt8) : Nil</a>
+        <a href="#set_parent%28object_number%3AUInt16%2Cvalue%3AUInt16%29%3ANil-instance-method" class="signature"><strong>#set_parent</strong>(object_number : UInt16, value : UInt16) : Nil</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#set_sibling%28object_number%3AUInt16%2Cvalue%3AUInt8%29%3ANil-instance-method" class="signature"><strong>#set_sibling</strong>(object_number : UInt16, value : UInt8) : Nil</a>
+        <a href="#set_sibling%28object_number%3AUInt16%2Cvalue%3AUInt16%29%3ANil-instance-method" class="signature"><strong>#set_sibling</strong>(object_number : UInt16, value : UInt16) : Nil</a>
         
       </li>
     
@@ -386,7 +389,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#sibling%28object_number%3AUInt16%29%3AUInt8-instance-method" class="signature"><strong>#sibling</strong>(object_number : UInt16) : UInt8</a>
+        <a href="#sibling%28object_number%3AUInt16%29%3AUInt16-instance-method" class="signature"><strong>#sibling</strong>(object_number : UInt16) : UInt16</a>
         
       </li>
     
@@ -497,12 +500,45 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="child(object_number:UInt16):UInt8-instance-method">
+    <div class="entry-detail" id="all_property_bytes(object_number:UInt16):Hash(UInt8,Array(UInt8))-instance-method">
+      <div class="signature">
+
+        def <strong>all_property_bytes</strong>(object_number : UInt16) : Hash(UInt8, Array(UInt8))
+
+        <a class="method-permalink" href="#all_property_bytes%28object_number%3AUInt16%29%3AHash%28UInt8%2CArray%28UInt8%29%29-instance-method">#</a>
+      </div>
+
+        <div class="doc">
+
+          <p>Return every byte of each property, including values longer than a word.</p>
+        </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="entry-detail" id="attribute_count:Int32-instance-method">
+      <div class="signature">
+
+        def <strong>attribute_count</strong> : Int32
+
+        <a class="method-permalink" href="#attribute_count%3AInt32-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="entry-detail" id="child(object_number:UInt16):UInt16-instance-method">
       <div class="signature">
         
-        def <strong>child</strong>(object_number : UInt16) : UInt8
+        def <strong>child</strong>(object_number : UInt16) : UInt16
 
-        <a class="method-permalink" href="#child%28object_number%3AUInt16%29%3AUInt8-instance-method">#</a>
+        <a class="method-permalink" href="#child%28object_number%3AUInt16%29%3AUInt16-instance-method">#</a>
       </div>
       
       <br/>
@@ -539,6 +575,20 @@
       </div>
     </div>
   
+    <div class="entry-detail" id="default_property_count:Int32-instance-method">
+      <div class="signature">
+
+        def <strong>default_property_count</strong> : Int32
+
+        <a class="method-permalink" href="#default_property_count%3AInt32-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="get_next_property_number(object_number:UInt16,property_number:UInt8):UInt8-instance-method">
       <div class="signature">
         
@@ -595,12 +645,40 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="parent(object_number:UInt16):UInt8-instance-method">
+    <div class="entry-detail" id="object_count:Int32-instance-method">
+      <div class="signature">
+
+        def <strong>object_count</strong> : Int32
+
+        <a class="method-permalink" href="#object_count%3AInt32-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="entry-detail" id="object_entry_size:Int32-instance-method">
+      <div class="signature">
+
+        def <strong>object_entry_size</strong> : Int32
+
+        <a class="method-permalink" href="#object_entry_size%3AInt32-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="entry-detail" id="parent(object_number:UInt16):UInt16-instance-method">
       <div class="signature">
         
-        def <strong>parent</strong>(object_number : UInt16) : UInt8
+        def <strong>parent</strong>(object_number : UInt16) : UInt16
 
-        <a class="method-permalink" href="#parent%28object_number%3AUInt16%29%3AUInt8-instance-method">#</a>
+        <a class="method-permalink" href="#parent%28object_number%3AUInt16%29%3AUInt16-instance-method">#</a>
       </div>
       
       <br/>
@@ -679,12 +757,12 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="set_child(object_number:UInt16,value:UInt8):Nil-instance-method">
+    <div class="entry-detail" id="set_child(object_number:UInt16,value:UInt16):Nil-instance-method">
       <div class="signature">
         
-        def <strong>set_child</strong>(object_number : UInt16, value : UInt8) : Nil
+        def <strong>set_child</strong>(object_number : UInt16, value : UInt16) : Nil
 
-        <a class="method-permalink" href="#set_child%28object_number%3AUInt16%2Cvalue%3AUInt8%29%3ANil-instance-method">#</a>
+        <a class="method-permalink" href="#set_child%28object_number%3AUInt16%2Cvalue%3AUInt16%29%3ANil-instance-method">#</a>
       </div>
       
       <br/>
@@ -693,12 +771,12 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="set_parent(object_number:UInt16,value:UInt8):Nil-instance-method">
+    <div class="entry-detail" id="set_parent(object_number:UInt16,value:UInt16):Nil-instance-method">
       <div class="signature">
         
-        def <strong>set_parent</strong>(object_number : UInt16, value : UInt8) : Nil
+        def <strong>set_parent</strong>(object_number : UInt16, value : UInt16) : Nil
 
-        <a class="method-permalink" href="#set_parent%28object_number%3AUInt16%2Cvalue%3AUInt8%29%3ANil-instance-method">#</a>
+        <a class="method-permalink" href="#set_parent%28object_number%3AUInt16%2Cvalue%3AUInt16%29%3ANil-instance-method">#</a>
       </div>
       
       <br/>
@@ -707,12 +785,12 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="set_sibling(object_number:UInt16,value:UInt8):Nil-instance-method">
+    <div class="entry-detail" id="set_sibling(object_number:UInt16,value:UInt16):Nil-instance-method">
       <div class="signature">
         
-        def <strong>set_sibling</strong>(object_number : UInt16, value : UInt8) : Nil
+        def <strong>set_sibling</strong>(object_number : UInt16, value : UInt16) : Nil
 
-        <a class="method-permalink" href="#set_sibling%28object_number%3AUInt16%2Cvalue%3AUInt8%29%3ANil-instance-method">#</a>
+        <a class="method-permalink" href="#set_sibling%28object_number%3AUInt16%2Cvalue%3AUInt16%29%3ANil-instance-method">#</a>
       </div>
       
       <br/>
@@ -749,12 +827,12 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="sibling(object_number:UInt16):UInt8-instance-method">
+    <div class="entry-detail" id="sibling(object_number:UInt16):UInt16-instance-method">
       <div class="signature">
         
-        def <strong>sibling</strong>(object_number : UInt16) : UInt8
+        def <strong>sibling</strong>(object_number : UInt16) : UInt16
 
-        <a class="method-permalink" href="#sibling%28object_number%3AUInt16%29%3AUInt8-instance-method">#</a>
+        <a class="method-permalink" href="#sibling%28object_number%3AUInt16%29%3AUInt16-instance-method">#</a>
       </div>
       
       <br/>

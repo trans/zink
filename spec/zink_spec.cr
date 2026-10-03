@@ -36,7 +36,8 @@ private def build_story_bytes(
   write_word(bytes, 0x0c, globals_table)
   write_word(bytes, 0x0e, static_base)
   write_word(bytes, 0x18, 0x00_u16) # Abbrev table
-  write_word(bytes, 0x1a, (bytes.size // 2).to_u16)
+  length_unit = version <= 3 ? 2 : version <= 5 ? 4 : 8
+  write_word(bytes, 0x1a, (bytes.size // length_unit).to_u16)
   bytes
 end
 
@@ -94,6 +95,33 @@ private def build_object_story_bytes : Bytes
   bytes
 end
 
+private def build_v5_object_story_bytes : Bytes
+  bytes = build_story_bytes(
+    version: 5_u8,
+    object_table: 0x0500_u16,
+    globals_table: 0x0300_u16,
+    static_base: 0x2500_u16,
+    size: 0x3000
+  )
+  objects_base = 0x0500 + 126
+  property_table = objects_base + 260 * 14
+  260.times do |index|
+    write_word(bytes, objects_base + index * 14 + 12, property_table.to_u16)
+  end
+  write_word(bytes, objects_base + 6, 256_u16)           # object 1 parent
+  bytes[objects_base + 5] = 1_u8                         # attribute 47
+  write_word(bytes, objects_base + 255 * 14 + 10, 1_u16) # object 256 child
+
+  bytes[property_table] = 0_u8
+  bytes[property_table + 1] = 0x7f_u8 # property 63, two bytes
+  write_word(bytes, property_table + 2, 0x1234_u16)
+  bytes[property_table + 4] = 0xbe_u8 # property 62, two size bytes
+  bytes[property_table + 5] = 0x85_u8 # five data bytes
+  write_bytes(bytes, property_table + 6, Bytes[1, 2, 3, 4, 5])
+  bytes[property_table + 11] = 0_u8
+  bytes
+end
+
 private def set_story_checksum(bytes : Bytes) : Nil
   checksum = 0_u32
   0x40.upto(bytes.size - 1) do |address|
@@ -125,6 +153,12 @@ describe Zink::Memory do
     expect_raises(RuntimeError, /static memory/) do
       memory.write_byte(0x90, 0x01_u8)
     end
+
+    before = memory.read_byte(0x4f)
+    expect_raises(RuntimeError, /static memory/) do
+      memory.write_word(0x4f, 0xbeef_u16)
+    end
+    memory.read_byte(0x4f).should eq(before)
   end
 end
 
@@ -199,6 +233,85 @@ describe Zink::TextDecoder do
 
     text.should eq("\n ")
   end
+
+  it "uses word addresses for abbreviations in v5" do
+    bytes = build_story_bytes(version: 5_u8)
+    write_word(bytes, 0x18, 0x0100_u16)
+    write_word(bytes, 0x0100, 0x0090_u16)       # word address -> byte address 0x120
+    write_word(bytes, 0x0120, zword(13, 14, 0)) # "hi "
+    write_word(bytes, 0x40, zword(1, 0, 0))     # abbreviation 0, then space
+
+    story = Zink::Story.from_bytes(bytes)
+    text, _ = Zink::TextDecoder.new(story.memory, story.header).decode_zstring_at(0x40)
+    text.should eq("hi  ")
+  end
+
+  it "uses the v5 custom alphabet table when present" do
+    bytes = build_story_bytes(version: 5_u8)
+    write_word(bytes, 0x34, 0x0100_u16)
+    bytes[0x0100] = 'x'.ord.to_u8 # A0 zchar 6
+    write_word(bytes, 0x40, zword(6, 0, 0))
+
+    story = Zink::Story.from_bytes(bytes)
+    text, _ = Zink::TextDecoder.new(story.memory, story.header).decode_zstring_at(0x40)
+    text.should eq("x  ")
+  end
+end
+
+describe Zink::Parser do
+  it "writes v5 input length and v5 token positions" do
+    bytes = build_story_bytes(version: 5_u8, static_base: 0x00c0_u16)
+    bytes[0x80] = 20_u8
+    bytes[0xa0] = 4_u8
+    story = Zink::Story.from_bytes(bytes)
+    Zink::Parser.new(story.memory, story.header).read_into_buffers("look", 0x80_u16, 0xa0_u16)
+
+    story.memory.read_byte(0x81).should eq(4_u8)
+    String.new(story.memory.bytes[0x82, 4]).should eq("look")
+    story.memory.read_byte(0xa1).should eq(1_u8)
+    story.memory.read_byte(0xa5).should eq(2_u8)
+  end
+
+  it "continues preloaded v5 input before tokenising" do
+    bytes = build_story_bytes(version: 5_u8, static_base: 0x00c0_u16)
+    bytes[0x80] = 20_u8
+    bytes[0x81] = 3_u8
+    write_bytes(bytes, 0x82, "ope".to_slice)
+    bytes[0xa0] = 4_u8
+
+    story = Zink::Story.from_bytes(bytes)
+    Zink::Parser.new(story.memory, story.header).read_into_buffers("n", 0x80_u16, 0xa0_u16)
+    story.memory.read_byte(0x81).should eq(4_u8)
+    String.new(story.memory.bytes[0x82, 4]).should eq("open")
+    story.memory.read_byte(0xa5).should eq(2_u8)
+    story.memory.read_byte(0xa4).should eq(4_u8)
+  end
+
+  it "encodes dictionary keys with a v5 custom alphabet" do
+    bytes = build_story_bytes(version: 5_u8)
+    write_word(bytes, 0x34, 0x0100_u16)
+    bytes[0x0100] = 'x'.ord.to_u8
+    story = Zink::Story.from_bytes(bytes)
+    encoded = Zink::Parser.new(story.memory, story.header).encode_dictionary_key("x")
+    encoded[0].should eq(((zword(6, 5, 5, false) >> 8) & 0xff).to_u8)
+  end
+end
+
+describe Zink::WindowedIO do
+  it "renders upper-window rows when returning to the story window" do
+    inner = Zink::BufferIO.new
+    screen = Zink::WindowedIO.new(inner)
+    screen.split_window(2)
+    screen.set_window(1)
+    screen.set_cursor(1, 1)
+    screen.write("Status")
+    screen.set_cursor(2, 3)
+    screen.write("Menu")
+    screen.set_window(0)
+    screen.write("Story")
+
+    inner.to_s.should eq("Status\n  Menu\nStory")
+  end
 end
 
 describe Zink::ObjectTable do
@@ -239,6 +352,34 @@ describe Zink::ObjectTable do
 
     objects.put_property(1_u16, 5_u8, 7_u16)
     objects.get_property(1_u16, 5_u8).should eq(7_u16)
+  end
+
+  it "reads v5 objects, wide links, attributes, and property sizes" do
+    story = Zink::Story.from_bytes(build_v5_object_story_bytes)
+    objects = Zink::ObjectTable.new(story.memory, story.header)
+    objects.object_count.should eq(260)
+    objects.parent(1_u16).should eq(256_u16)
+    objects.child(256_u16).should eq(1_u16)
+    objects.test_attribute(1_u16, 47_u8).should be_true
+    objects.get_property(1_u16, 63_u8).should eq(0x1234_u16)
+    objects.get_property(1_u16, 62_u8).should eq(0x0102_u16)
+    objects.all_property_bytes(1_u16)[62_u8].should eq([1_u8, 2_u8, 3_u8, 4_u8, 5_u8])
+    address = objects.get_property_address(1_u16, 62_u8)
+    objects.property_length(address).should eq(5_u8)
+
+    view = Zink::VM.new(story).worldview
+    view.objects.size.should eq(260)
+    view.location.should eq(0_u16)
+  end
+
+  it "uses the wide object layout in v4" do
+    bytes = build_v5_object_story_bytes
+    bytes[0] = 4_u8
+    story = Zink::Story.from_bytes(bytes)
+    objects = Zink::ObjectTable.new(story.memory, story.header)
+    objects.object_count.should eq(260)
+    objects.parent(1_u16).should eq(256_u16)
+    objects.property_length(objects.get_property_address(1_u16, 62_u8)).should eq(5_u8)
   end
 end
 
@@ -410,6 +551,261 @@ describe Zink::SaveSnapshot do
 end
 
 describe Zink::VM do
+  it "decodes call_vs2 arguments and checks their count in v5" do
+    bytes = build_story_bytes(version: 5_u8, static_base: 0x0100_u16)
+    bytes[0x40] = 0xec_u8                                # call_vs2
+    bytes[0x41] = 0x55_u8                                # four small operands
+    bytes[0x42] = 0x5f_u8                                # two more, then omitted
+    write_bytes(bytes, 0x43, Bytes[0x30, 1, 2, 3, 4, 5]) # routine 0xc0, five args
+    bytes[0x49] = 0x10_u8                                # -> global 0
+    bytes[0x4a] = 0xba_u8
+    bytes[0xc0] = 5_u8    # five zero-initialized locals in v5
+    bytes[0xc1] = 0xff_u8 # check_arg_count 5
+    bytes[0xc2] = 0x7f_u8
+    bytes[0xc3] = 5_u8
+    bytes[0xc4] = 0xc4_u8 # branch to 0xc7
+    bytes[0xc5] = 0xb1_u8 # rfalse
+    bytes[0xc6] = 0xb4_u8 # nop
+    bytes[0xc7] = 0xab_u8 # ret local 5
+    bytes[0xc8] = 5_u8
+
+    story = Zink::Story.from_bytes(bytes)
+    Zink::VM.new(story).run
+    story.memory.read_word(0x70).should eq(5_u16)
+  end
+
+  it "reads v4 routine default locals" do
+    bytes = build_story_bytes(version: 4_u8, static_base: 0x0100_u16)
+    bytes[0x40] = 0x98_u8 # call_1s packed routine 0x30 -> byte address 0xc0
+    bytes[0x41] = 0x30_u8
+    bytes[0x42] = 0x10_u8 # -> global 0
+    bytes[0x43] = 0xba_u8
+    bytes[0xc0] = 1_u8 # one local
+    write_word(bytes, 0xc1, 0x1234_u16)
+    bytes[0xc3] = 0xab_u8 # ret local 1
+    bytes[0xc4] = 1_u8
+
+    story = Zink::Story.from_bytes(bytes)
+    Zink::VM.new(story).run
+    story.memory.read_word(0x70).should eq(0x1234_u16)
+  end
+
+  it "returns 2 from v4 save after restore and preserves display flags" do
+    bytes = build_story_bytes(version: 4_u8)
+    bytes[0x40] = 0xb5_u8 # save -> global 0
+    bytes[0x41] = 0x10_u8
+    bytes[0x42] = 0xb6_u8 # restore -> global 1
+    bytes[0x43] = 0x11_u8
+
+    story = Zink::Story.from_bytes(bytes)
+    vm = Zink::VM.new(story)
+    vm.step
+    story.memory.read_word(0x70).should eq(1_u16)
+
+    story.memory.write_word(0x10, 3_u16) # transcript and fixed pitch
+    vm.step
+    vm.pc.should eq(0x42)
+    story.memory.read_word(0x70).should eq(2_u16)
+    (story.memory.read_word(0x10) & 3_u16).should eq(3_u16)
+  end
+
+  it "stores the v5 read terminator and writes the length-prefixed input buffer" do
+    bytes = build_story_bytes(version: 5_u8, static_base: 0x00c0_u16)
+    bytes[0x40] = 0xe4_u8 # read text parse -> global 0
+    bytes[0x41] = 0x0f_u8
+    write_word(bytes, 0x42, 0x0080_u16)
+    write_word(bytes, 0x44, 0x00a0_u16)
+    bytes[0x46] = 0x10_u8
+    bytes[0x47] = 0xba_u8
+    bytes[0x80] = 20_u8
+    bytes[0xa0] = 4_u8
+
+    story = Zink::Story.from_bytes(bytes)
+    Zink::VM.new(story, Zink::ScriptedIO.new(["look"])).run
+    story.memory.read_word(0x70).should eq(13_u16)
+    story.memory.read_byte(0x81).should eq(4_u8)
+    story.memory.read_byte(0xa5).should eq(2_u8)
+    story.memory.read_byte(0x21).should eq(80_u8)
+  end
+
+  it "captures v5 output stream 3 text in story memory" do
+    bytes = build_story_bytes(version: 5_u8, static_base: 0x00c0_u16)
+    bytes[0x40] = 0xf3_u8 # output_stream 3 table
+    bytes[0x41] = 0x4f_u8
+    bytes[0x42] = 3_u8
+    write_word(bytes, 0x43, 0x0090_u16)
+    bytes[0x45] = 0xe5_u8 # print_char 'A'
+    bytes[0x46] = 0x7f_u8
+    bytes[0x47] = 'A'.ord.to_u8
+    bytes[0x48] = 0xf3_u8 # output_stream -3
+    bytes[0x49] = 0x3f_u8
+    write_word(bytes, 0x4a, 0xfffd_u16)
+    bytes[0x4c] = 0xba_u8
+
+    story = Zink::Story.from_bytes(bytes)
+    io = Zink::BufferIO.new
+    Zink::VM.new(story, io).run
+    story.memory.read_word(0x90).should eq(1_u16)
+    story.memory.read_byte(0x92).should eq('A'.ord.to_u8)
+    io.to_s.should be_empty
+  end
+
+  it "captures transcript and command streams when selected" do
+    bytes = build_story_bytes(version: 5_u8, static_base: 0x00c0_u16)
+    bytes[0x40] = 0xf3_u8 # output_stream 2
+    bytes[0x41] = 0x7f_u8
+    bytes[0x42] = 2_u8
+    bytes[0x43] = 0xf3_u8 # output_stream 4
+    bytes[0x44] = 0x7f_u8
+    bytes[0x45] = 4_u8
+    bytes[0x46] = 0xe5_u8 # print_char 'A'
+    bytes[0x47] = 0x7f_u8
+    bytes[0x48] = 'A'.ord.to_u8
+    bytes[0x49] = 0xe4_u8 # read
+    bytes[0x4a] = 0x0f_u8
+    write_word(bytes, 0x4b, 0x0080_u16)
+    write_word(bytes, 0x4d, 0x00a0_u16)
+    bytes[0x4f] = 0x10_u8
+    bytes[0x50] = 0xf3_u8 # output_stream -2
+    bytes[0x51] = 0x3f_u8
+    write_word(bytes, 0x52, 0xfffe_u16)
+    bytes[0x54] = 0xba_u8
+    bytes[0x80] = 20_u8
+    bytes[0xa0] = 4_u8
+
+    story = Zink::Story.from_bytes(bytes)
+    vm = Zink::VM.new(story, Zink::ScriptedIO.new(["look"]))
+    vm.run
+    vm.transcript.should eq("Alook\n")
+    vm.recorded_commands.should eq("look\n")
+    (story.memory.read_word(0x10) & 1_u16).should eq(0_u16)
+  end
+
+  it "resumes v5 extended restore at save with result 2" do
+    bytes = build_story_bytes(version: 5_u8)
+    bytes[0x40] = 0xbe_u8 # EXT save, no operands -> global 0
+    bytes[0x41] = 0_u8
+    bytes[0x42] = 0xff_u8
+    bytes[0x43] = 0x10_u8
+    bytes[0x44] = 0xbe_u8 # EXT restore, no operands -> global 1
+    bytes[0x45] = 1_u8
+    bytes[0x46] = 0xff_u8
+    bytes[0x47] = 0x11_u8
+
+    story = Zink::Story.from_bytes(bytes)
+    vm = Zink::VM.new(story)
+    vm.step
+    story.memory.read_word(0x70).should eq(1_u16)
+    vm.step
+    vm.pc.should eq(0x44)
+    story.memory.read_word(0x70).should eq(2_u16)
+  end
+
+  it "resumes v5 undo at save_undo with result 2" do
+    bytes = build_story_bytes(version: 5_u8)
+    bytes[0x40] = 0xbe_u8
+    bytes[0x41] = 9_u8 # save_undo
+    bytes[0x42] = 0xff_u8
+    bytes[0x43] = 0x10_u8
+    bytes[0x44] = 0xbe_u8
+    bytes[0x45] = 10_u8 # restore_undo
+    bytes[0x46] = 0xff_u8
+    bytes[0x47] = 0x11_u8
+
+    story = Zink::Story.from_bytes(bytes)
+    vm = Zink::VM.new(story)
+    vm.step
+    story.memory.read_word(0x70).should eq(1_u16)
+    vm.step
+    vm.pc.should eq(0x44)
+    story.memory.read_word(0x70).should eq(2_u16)
+  end
+
+  it "saves and restores a v5 auxiliary byte range" do
+    bytes = build_story_bytes(version: 5_u8, static_base: 0x00c0_u16)
+    bytes[0x40] = 0xbe_u8 # EXT save table 0x90, length 3
+    bytes[0x41] = 0_u8
+    bytes[0x42] = 0x0f_u8
+    write_word(bytes, 0x43, 0x0090_u16)
+    write_word(bytes, 0x45, 3_u16)
+    bytes[0x47] = 0x10_u8
+    bytes[0x48] = 0xbe_u8 # EXT restore table 0x90, length 3
+    bytes[0x49] = 1_u8
+    bytes[0x4a] = 0x0f_u8
+    write_word(bytes, 0x4b, 0x0090_u16)
+    write_word(bytes, 0x4d, 3_u16)
+    bytes[0x4f] = 0x11_u8
+    write_bytes(bytes, 0x90, Bytes[3, 4, 5])
+
+    story = Zink::Story.from_bytes(bytes)
+    vm = Zink::VM.new(story)
+    vm.step
+    story.memory.write_byte(0x91, 0_u8)
+    vm.step
+    story.memory.read_byte(0x91).should eq(4_u8)
+    story.memory.read_word(0x72).should eq(3_u16)
+  end
+
+  it "resolves indirect variable numbers for store and inc" do
+    bytes = build_story_bytes
+    bytes[0x40] = 0x0d_u8 # store global 0 = variable number 17
+    bytes[0x41] = 0x10_u8
+    bytes[0x42] = 0x11_u8
+    bytes[0x43] = 0x4d_u8 # store (variable global 0), 42
+    bytes[0x44] = 0x10_u8
+    bytes[0x45] = 0x2a_u8
+    bytes[0x46] = 0xa5_u8 # inc (variable global 0)
+    bytes[0x47] = 0x10_u8
+    bytes[0x48] = 0xba_u8
+
+    story = Zink::Story.from_bytes(bytes)
+    Zink::VM.new(story).run
+    story.memory.read_word(0x70).should eq(17_u16)
+    story.memory.read_word(0x72).should eq(43_u16)
+  end
+
+  it "evaluates every je operand even after finding a match" do
+    bytes = build_story_bytes
+    cursor = 0x40
+    [9_u8, 3_u8, 3_u8].each do |value|
+      bytes[cursor] = 0xe8_u8 # push small constant
+      bytes[cursor + 1] = 0x7f_u8
+      bytes[cursor + 2] = value
+      cursor += 3
+    end
+    bytes[cursor] = 0xc1_u8     # je sp sp sp
+    bytes[cursor + 1] = 0xab_u8 # three variable operands
+    bytes[cursor + 2] = 0_u8
+    bytes[cursor + 3] = 0_u8
+    bytes[cursor + 4] = 0_u8
+    bytes[cursor + 5] = 0xc2_u8 # branch true, offset 2
+    bytes[cursor + 6] = 0xba_u8
+
+    vm = Zink::VM.new(Zink::Story.from_bytes(bytes))
+    vm.run
+    vm.export_save.stack.should be_empty
+  end
+
+  it "rounds signed division toward zero and keeps the dividend's remainder sign" do
+    bytes = build_story_bytes
+    bytes[0x40] = 0xd7_u8 # div, two large constants
+    bytes[0x41] = 0x0f_u8
+    write_word(bytes, 0x42, 0xfff9_u16) # -7
+    write_word(bytes, 0x44, 3_u16)
+    bytes[0x46] = 0x10_u8 # -> global 0
+    bytes[0x47] = 0xd8_u8 # mod, two large constants
+    bytes[0x48] = 0x0f_u8
+    write_word(bytes, 0x49, 0xfff9_u16) # -7
+    write_word(bytes, 0x4b, 3_u16)
+    bytes[0x4d] = 0x11_u8 # -> global 1
+    bytes[0x4e] = 0xba_u8
+
+    story = Zink::Story.from_bytes(bytes)
+    Zink::VM.new(story).run
+    story.memory.read_word(0x70).should eq(0xfffe_u16) # -2
+    story.memory.read_word(0x72).should eq(0xffff_u16) # -1
+  end
+
   it "runs a minimal print/new_line/quit program" do
     bytes = build_story_bytes
     bytes[0x40] = 0xb2_u8 # print

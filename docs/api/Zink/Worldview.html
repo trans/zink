@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Crystal Docs 1.19.1">
+<meta name="generator" content="Crystal Docs 1.21.1">
 <meta name="crystal_docs.project_version" content="main-dev">
 <meta name="crystal_docs.project_name" content="zink">
 
@@ -152,6 +152,11 @@
       
     </li>
   
+  <li class=" " data-id="zink/Zink/WindowedIO" data-name="zink::windowedio">
+      <a href="../Zink/WindowedIO.html">WindowedIO</a>
+
+    </li>
+
   <li class=" " data-id="zink/Zink/WorldObject" data-name="zink::worldobject">
       <a href="../Zink/WorldObject.html">WorldObject</a>
       
@@ -248,7 +253,7 @@
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#new%28location%3AUInt16%2Clocation_name%3AString%2Cobjects%3AArray%28WorldObject%29%29-class-method" class="signature"><strong>.new</strong>(location : UInt16, location_name : String, objects : Array(WorldObject))</a>
+        <a href="#new%28location%3AUInt16%2Clocation_name%3AString%2Cobjects%3AArray%28WorldObject%29%2Cglobals%3AHash%28UInt8%2CUInt16%29%29-class-method" class="signature"><strong>.new</strong>(location : UInt16, location_name : String, objects : Array(WorldObject), globals : Hash(UInt8, UInt16))</a>
         
       </li>
     
@@ -290,6 +295,13 @@
         
       </li>
     
+      <li class="entry-summary">
+        <a href="#globals%3AHash%28UInt8%2CUInt16%29-instance-method" class="signature"><strong>#globals</strong> : Hash(UInt8, UInt16)</a>
+
+          <div class="summary"><p>Keys are Z-machine variable numbers (16 through 255).</p></div>
+
+      </li>
+
       <li class="entry-summary">
         <a href="#location%3AUInt16-instance-method" class="signature"><strong>#location</strong> : UInt16</a>
         
@@ -367,12 +379,12 @@
     Constructor Detail
   </h2>
   
-    <div class="entry-detail" id="new(location:UInt16,location_name:String,objects:Array(WorldObject))-class-method">
+    <div class="entry-detail" id="new(location:UInt16,location_name:String,objects:Array(WorldObject),globals:Hash(UInt8,UInt16))-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(location : UInt16, location_name : String, objects : Array(<a href="../Zink/WorldObject.html">WorldObject</a>))
+        def self.<strong>new</strong>(location : UInt16, location_name : String, objects : Array(<a href="../Zink/WorldObject.html">WorldObject</a>), globals : Hash(UInt8, UInt16))
 
-        <a class="method-permalink" href="#new%28location%3AUInt16%2Clocation_name%3AString%2Cobjects%3AArray%28WorldObject%29%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28location%3AUInt16%2Clocation_name%3AString%2Cobjects%3AArray%28WorldObject%29%2Cglobals%3AHash%28UInt8%2CUInt16%29%29-class-method">#</a>
       </div>
       
       <br/>
@@ -453,6 +465,25 @@
       </div>
     </div>
   
+    <div class="entry-detail" id="globals:Hash(UInt8,UInt16)-instance-method">
+      <div class="signature">
+
+        def <strong>globals</strong> : Hash(UInt8, UInt16)
+
+        <a class="method-permalink" href="#globals%3AHash%28UInt8%2CUInt16%29-instance-method">#</a>
+      </div>
+
+        <div class="doc">
+
+          <p>Keys are Z-machine variable numbers (16 through 255).</p>
+        </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="location:UInt16-instance-method">
       <div class="signature">
         

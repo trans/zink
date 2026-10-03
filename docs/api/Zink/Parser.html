@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Crystal Docs 1.19.1">
+<meta name="generator" content="Crystal Docs 1.21.1">
 <meta name="crystal_docs.project_version" content="main-dev">
 <meta name="crystal_docs.project_name" content="zink">
 
@@ -152,6 +152,11 @@
       
     </li>
   
+  <li class=" " data-id="zink/Zink/WindowedIO" data-name="zink::windowedio">
+      <a href="../Zink/WindowedIO.html">WindowedIO</a>
+
+    </li>
+
   <li class=" " data-id="zink/Zink/WorldObject" data-name="zink::worldobject">
       <a href="../Zink/WorldObject.html">WorldObject</a>
       
@@ -272,7 +277,7 @@
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#encode_dictionary_key%28token%3AString%2Cversion%3AUInt8%29%3ABytes-class-method" class="signature"><strong>.encode_dictionary_key</strong>(token : String, version : UInt8) : Bytes</a>
+        <a href="#encode_dictionary_key%28token%3AString%2Cversion%3AUInt8%2Calphabet_table%3ABytes%7CNil%3Dnil%29%3ABytes-class-method" class="signature"><strong>.encode_dictionary_key</strong>(token : String, version : UInt8, alphabet_table : Bytes | Nil = <span class="n">nil</span>) : Bytes</a>
         
       </li>
     
@@ -293,10 +298,20 @@
   <ul class="list-summary">
     
       <li class="entry-summary">
+        <a href="#encode_dictionary_key%28token%3AString%29%3ABytes-instance-method" class="signature"><strong>#encode_dictionary_key</strong>(token : String) : Bytes</a>
+
+      </li>
+
+      <li class="entry-summary">
         <a href="#read_into_buffers%28line%3AString%2Ctext_buffer_addr%3AUInt16%2Cparse_buffer_addr%3AUInt16%29%3ANil-instance-method" class="signature"><strong>#read_into_buffers</strong>(line : String, text_buffer_addr : UInt16, parse_buffer_addr : UInt16) : Nil</a>
         
       </li>
     
+      <li class="entry-summary">
+        <a href="#tokenise%28text_buffer_addr%3AUInt16%2Cparse_buffer_addr%3AUInt16%2Cdictionary_addr%3AUInt16%3D0_u16%2Cskip_unknown%3ABool%3Dfalse%29%3ANil-instance-method" class="signature"><strong>#tokenise</strong>(text_buffer_addr : UInt16, parse_buffer_addr : UInt16, dictionary_addr : UInt16 = <span class="n">0_u16</span>, skip_unknown : Bool = <span class="n">false</span>) : Nil</a>
+
+      </li>
+
   </ul>
 
 
@@ -367,12 +382,12 @@
     Class Method Detail
   </h2>
   
-    <div class="entry-detail" id="encode_dictionary_key(token:String,version:UInt8):Bytes-class-method">
+    <div class="entry-detail" id="encode_dictionary_key(token:String,version:UInt8,alphabet_table:Bytes|Nil=nil):Bytes-class-method">
       <div class="signature">
         
-        def self.<strong>encode_dictionary_key</strong>(token : String, version : UInt8) : Bytes
+        def self.<strong>encode_dictionary_key</strong>(token : String, version : UInt8, alphabet_table : Bytes | Nil = <span class="n">nil</span>) : Bytes
 
-        <a class="method-permalink" href="#encode_dictionary_key%28token%3AString%2Cversion%3AUInt8%29%3ABytes-class-method">#</a>
+        <a class="method-permalink" href="#encode_dictionary_key%28token%3AString%2Cversion%3AUInt8%2Calphabet_table%3ABytes%7CNil%3Dnil%29%3ABytes-class-method">#</a>
       </div>
       
       <br/>
@@ -395,6 +410,20 @@
     Instance Method Detail
   </h2>
   
+    <div class="entry-detail" id="encode_dictionary_key(token:String):Bytes-instance-method">
+      <div class="signature">
+
+        def <strong>encode_dictionary_key</strong>(token : String) : Bytes
+
+        <a class="method-permalink" href="#encode_dictionary_key%28token%3AString%29%3ABytes-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="read_into_buffers(line:String,text_buffer_addr:UInt16,parse_buffer_addr:UInt16):Nil-instance-method">
       <div class="signature">
         
@@ -409,6 +438,20 @@
       </div>
     </div>
   
+    <div class="entry-detail" id="tokenise(text_buffer_addr:UInt16,parse_buffer_addr:UInt16,dictionary_addr:UInt16=0_u16,skip_unknown:Bool=false):Nil-instance-method">
+      <div class="signature">
+
+        def <strong>tokenise</strong>(text_buffer_addr : UInt16, parse_buffer_addr : UInt16, dictionary_addr : UInt16 = <span class="n">0_u16</span>, skip_unknown : Bool = <span class="n">false</span>) : Nil
+
+        <a class="method-permalink" href="#tokenise%28text_buffer_addr%3AUInt16%2Cparse_buffer_addr%3AUInt16%2Cdictionary_addr%3AUInt16%3D0_u16%2Cskip_unknown%3ABool%3Dfalse%29%3ANil-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
 
 
 

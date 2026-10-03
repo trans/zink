@@ -1,0 +1,54 @@
+# Zink
+
+Zink is a Crystal interpreter for Z-machine text adventures. It runs text-mode
+version 3, 4, and 5 story files and exposes a JSON view of the object tree and
+globals.
+
+## Run
+
+Requires Crystal 1.19.1 or newer.
+
+```sh
+crystal run src/main.cr -- path/to/story.z5
+```
+
+Or build an executable with `just build` and run `bin/zink path/to/story.z5`.
+Use `--worldview` to boot a story, submit `look`, and print its state as JSON.
+Use `--record-actions FILE` to record input lines. `--debug` prints VM instruction
+addresses to standard error.
+
+```sh
+crystal spec
+```
+
+## State API
+
+`Zink::VM#worldview` returns a snapshot of the objects and all 240 global
+variables. `Worldview#globals` is keyed by Z-machine variable number (16–255).
+Each `WorldObject#property_bytes` entry contains the complete property data;
+`properties` retains the one-byte or first-word values. The `location` field
+uses global 16 in version 3. Later versions do not reserve a location global,
+so their `location` field is zero.
+
+`VM#export_save` and `VM#import_save` transfer execution state. The snapshot is
+JSON serializable. `VM#export_save_for_persistence` rewinds to the latest input
+instruction so a restored session can wait for a new command.
+
+## Code layout
+
+- `Memory`, `Header`, and `Story` own story bytes and file metadata.
+- `ObjectTable`, `TextDecoder`, and `Parser` handle version-dependent data.
+- `VM` owns execution state. Opcode groups live in `src/zink/vm/`.
+- `IODevice` handles host input and output. `WindowedIO` renders the upper
+  Z-machine window as readable rows on a linear text device.
+
+## Current limits
+
+Zink advertises no colour, sound, graphics, mouse, or timed-input capability.
+Transcript and command-file streams are available through `VM#transcript` and
+`VM#recorded_commands`; Zink does not write those streams to files. Extended
+ZSCII character mapping and true single-key terminal input are not implemented;
+for `read_char`, type a key followed by Enter. Save/restore and auxiliary saves
+use memory within a running VM; an application can persist snapshots through the
+state API above. Version 4 has synthetic opcode tests, but no real v4 story has
+been exercised yet.

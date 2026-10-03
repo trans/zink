@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Crystal Docs 1.19.1">
+<meta name="generator" content="Crystal Docs 1.21.1">
 <meta name="crystal_docs.project_version" content="main-dev">
 <meta name="crystal_docs.project_name" content="zink">
 
@@ -152,6 +152,11 @@
       
     </li>
   
+  <li class=" " data-id="zink/Zink/WindowedIO" data-name="zink::windowedio">
+      <a href="../Zink/WindowedIO.html">WindowedIO</a>
+
+    </li>
+
   <li class=" current" data-id="zink/Zink/WorldObject" data-name="zink::worldobject">
       <a href="../Zink/WorldObject.html">WorldObject</a>
       
@@ -248,7 +253,7 @@
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#new%28number%3AUInt16%2Cname%3AString%2Cparent%3AUInt16%2Cchildren%3AArray%28UInt16%29%2Cattributes%3AArray%28UInt8%29%2Cproperties%3AHash%28UInt8%2CUInt16%29%29-class-method" class="signature"><strong>.new</strong>(number : UInt16, name : String, parent : UInt16, children : Array(UInt16), attributes : Array(UInt8), properties : Hash(UInt8, UInt16))</a>
+        <a href="#new%28number%3AUInt16%2Cname%3AString%2Cparent%3AUInt16%2Cchildren%3AArray%28UInt16%29%2Cattributes%3AArray%28UInt8%29%2Cproperties%3AHash%28UInt8%2CUInt16%29%2Cproperty_bytes%3AHash%28UInt8%2CArray%28UInt8%29%29%29-class-method" class="signature"><strong>.new</strong>(number : UInt16, name : String, parent : UInt16, children : Array(UInt16), attributes : Array(UInt8), properties : Hash(UInt8, UInt16), property_bytes : Hash(UInt8, Array(UInt8)))</a>
         
       </li>
     
@@ -308,6 +313,15 @@
       <li class="entry-summary">
         <a href="#properties%3AHash%28UInt8%2CUInt16%29-instance-method" class="signature"><strong>#properties</strong> : Hash(UInt8, UInt16)</a>
         
+          <div class="summary"><p>One-byte values or the first word of a longer property.</p></div>
+
+      </li>
+
+      <li class="entry-summary">
+        <a href="#property_bytes%3AHash%28UInt8%2CArray%28UInt8%29%29-instance-method" class="signature"><strong>#property_bytes</strong> : Hash(UInt8, Array(UInt8))</a>
+
+          <div class="summary"><p>Complete property contents, in storage order.</p></div>
+
       </li>
     
   </ul>
@@ -380,12 +394,12 @@
     Constructor Detail
   </h2>
   
-    <div class="entry-detail" id="new(number:UInt16,name:String,parent:UInt16,children:Array(UInt16),attributes:Array(UInt8),properties:Hash(UInt8,UInt16))-class-method">
+    <div class="entry-detail" id="new(number:UInt16,name:String,parent:UInt16,children:Array(UInt16),attributes:Array(UInt8),properties:Hash(UInt8,UInt16),property_bytes:Hash(UInt8,Array(UInt8)))-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(number : UInt16, name : String, parent : UInt16, children : Array(UInt16), attributes : Array(UInt8), properties : Hash(UInt8, UInt16))
+        def self.<strong>new</strong>(number : UInt16, name : String, parent : UInt16, children : Array(UInt16), attributes : Array(UInt8), properties : Hash(UInt8, UInt16), property_bytes : Hash(UInt8, Array(UInt8)))
 
-        <a class="method-permalink" href="#new%28number%3AUInt16%2Cname%3AString%2Cparent%3AUInt16%2Cchildren%3AArray%28UInt16%29%2Cattributes%3AArray%28UInt8%29%2Cproperties%3AHash%28UInt8%2CUInt16%29%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28number%3AUInt16%2Cname%3AString%2Cparent%3AUInt16%2Cchildren%3AArray%28UInt16%29%2Cattributes%3AArray%28UInt8%29%2Cproperties%3AHash%28UInt8%2CUInt16%29%2Cproperty_bytes%3AHash%28UInt8%2CArray%28UInt8%29%29%29-class-method">#</a>
       </div>
       
       <br/>
@@ -516,6 +530,30 @@
         <a class="method-permalink" href="#properties%3AHash%28UInt8%2CUInt16%29-instance-method">#</a>
       </div>
       
+        <div class="doc">
+
+          <p>One-byte values or the first word of a longer property.</p>
+        </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="entry-detail" id="property_bytes:Hash(UInt8,Array(UInt8))-instance-method">
+      <div class="signature">
+
+        def <strong>property_bytes</strong> : Hash(UInt8, Array(UInt8))
+
+        <a class="method-permalink" href="#property_bytes%3AHash%28UInt8%2CArray%28UInt8%29%29-instance-method">#</a>
+      </div>
+
+        <div class="doc">
+
+          <p>Complete property contents, in storage order.</p>
+        </div>
+
       <br/>
       <div>
         

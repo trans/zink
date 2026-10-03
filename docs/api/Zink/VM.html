@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Crystal Docs 1.19.1">
+<meta name="generator" content="Crystal Docs 1.21.1">
 <meta name="crystal_docs.project_version" content="main-dev">
 <meta name="crystal_docs.project_name" content="zink">
 
@@ -152,6 +152,11 @@
       
     </li>
   
+  <li class=" " data-id="zink/Zink/WindowedIO" data-name="zink::windowedio">
+      <a href="../Zink/WindowedIO.html">WindowedIO</a>
+
+    </li>
+
   <li class=" " data-id="zink/Zink/WorldObject" data-name="zink::worldobject">
       <a href="../Zink/WorldObject.html">WorldObject</a>
       
@@ -218,6 +223,31 @@
     <br/>
   
 
+      zink/vm/extended.cr
+
+    <br/>
+
+
+      zink/vm/one_op.cr
+
+    <br/>
+
+
+      zink/vm/two_op.cr
+
+    <br/>
+
+
+      zink/vm/var.cr
+
+    <br/>
+
+
+      zink/vm/zero_op.cr
+
+    <br/>
+
+
 
 
   
@@ -281,6 +311,18 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#export_save_for_persistence%3ASaveSnapshot-instance-method" class="signature"><strong>#export_save_for_persistence</strong> : SaveSnapshot</a>
+
+          <div class="summary"><p>Export a snapshot with PC rewound to the last sread instruction.</p></div>
+
+      </li>
+
+      <li class="entry-summary">
+        <a href="#global%28variable_number%3AUInt8%29%3AUInt16-instance-method" class="signature"><strong>#global</strong>(variable_number : UInt8) : UInt16</a>
+
+      </li>
+
+      <li class="entry-summary">
         <a href="#halted%3ABool-instance-method" class="signature"><strong>#halted</strong> : Bool</a>
         
       </li>
@@ -291,10 +333,22 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#last_read_pc%3AInt32-instance-method" class="signature"><strong>#last_read_pc</strong> : Int32</a>
+
+          <div class="summary"><p>Address of the most recent sread instruction — used by export_save_for_persistence to rewind PC so that on restore the VM re-executes the sread and blocks waiting for input.</p></div>
+
+      </li>
+
+      <li class="entry-summary">
         <a href="#pc%3AInt32-instance-method" class="signature"><strong>#pc</strong> : Int32</a>
         
       </li>
     
+      <li class="entry-summary">
+        <a href="#recorded_commands%3AString-instance-method" class="signature"><strong>#recorded_commands</strong> : String</a>
+
+      </li>
+
       <li class="entry-summary">
         <a href="#run%28max_steps%3DDEFAULT_MAX_STEPS%29%3ANil-instance-method" class="signature"><strong>#run</strong>(max_steps = <span class="t">DEFAULT_MAX_STEPS</span>) : Nil</a>
         
@@ -310,6 +364,11 @@
         
       </li>
     
+      <li class="entry-summary">
+        <a href="#transcript%3AString-instance-method" class="signature"><strong>#transcript</strong> : String</a>
+
+      </li>
+
       <li class="entry-summary">
         <a href="#worldview%3AWorldview-instance-method" class="signature"><strong>#worldview</strong> : Worldview</a>
         
@@ -403,6 +462,41 @@
       </div>
     </div>
   
+    <div class="entry-detail" id="export_save_for_persistence:SaveSnapshot-instance-method">
+      <div class="signature">
+
+        def <strong>export_save_for_persistence</strong> : <a href="../Zink/SaveSnapshot.html">SaveSnapshot</a>
+
+        <a class="method-permalink" href="#export_save_for_persistence%3ASaveSnapshot-instance-method">#</a>
+      </div>
+
+        <div class="doc">
+
+          <p>Export a snapshot with PC rewound to the last sread instruction.
+On import + run_unbounded, the VM re-executes sread → read_line → blocks
+waiting for input, which is the correct between-turns state.</p>
+        </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="entry-detail" id="global(variable_number:UInt8):UInt16-instance-method">
+      <div class="signature">
+
+        def <strong>global</strong>(variable_number : UInt8) : UInt16
+
+        <a class="method-permalink" href="#global%28variable_number%3AUInt8%29%3AUInt16-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="halted:Bool-instance-method">
       <div class="signature">
         
@@ -431,6 +525,27 @@
       </div>
     </div>
   
+    <div class="entry-detail" id="last_read_pc:Int32-instance-method">
+      <div class="signature">
+
+        def <strong>last_read_pc</strong> : Int32
+
+        <a class="method-permalink" href="#last_read_pc%3AInt32-instance-method">#</a>
+      </div>
+
+        <div class="doc">
+
+          <p>Address of the most recent sread instruction — used by
+export_save_for_persistence to rewind PC so that on restore
+the VM re-executes the sread and blocks waiting for input.</p>
+        </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="pc:Int32-instance-method">
       <div class="signature">
         
@@ -445,6 +560,20 @@
       </div>
     </div>
   
+    <div class="entry-detail" id="recorded_commands:String-instance-method">
+      <div class="signature">
+
+        def <strong>recorded_commands</strong> : String
+
+        <a class="method-permalink" href="#recorded_commands%3AString-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="run(max_steps=DEFAULT_MAX_STEPS):Nil-instance-method">
       <div class="signature">
         
@@ -487,6 +616,20 @@
       </div>
     </div>
   
+    <div class="entry-detail" id="transcript:String-instance-method">
+      <div class="signature">
+
+        def <strong>transcript</strong> : String
+
+        <a class="method-permalink" href="#transcript%3AString-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="worldview:Worldview-instance-method">
       <div class="signature">
         

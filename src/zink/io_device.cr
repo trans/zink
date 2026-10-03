@@ -3,6 +3,49 @@ module Zink
     abstract def write(text : String) : Nil
     abstract def read_line : String?
 
+    def read_char : Int32?
+      line = read_line
+      return nil unless line
+      line.empty? ? 13 : line[0].ord
+    end
+
+    def screen_width : Int32
+      80
+    end
+
+    def screen_height : Int32
+      25
+    end
+
+    # Screen operations are optional for transcript-oriented devices.
+    def split_window(lines : Int32) : Nil
+    end
+
+    def set_window(window : Int32) : Nil
+    end
+
+    def erase_window(window : Int32) : Nil
+    end
+
+    def erase_line : Nil
+    end
+
+    def set_cursor(row : Int32, column : Int32) : Nil
+    end
+
+    def cursor : {Int32, Int32}
+      {1, 1}
+    end
+
+    def set_text_style(style : Int32) : Nil
+    end
+
+    def buffer_mode(enabled : Bool) : Nil
+    end
+
+    def set_colour(foreground : Int32, background : Int32) : Nil
+    end
+
     def output_text : String
       ""
     end
@@ -69,6 +112,14 @@ module Zink
 
     def read_line : String?
       @input.gets
+    end
+
+    def screen_width : Int32
+      @wrap_width
+    end
+
+    def screen_height : Int32
+      (ENV["LINES"]?.try(&.to_i?) || 25).clamp(1, 255)
     end
 
     private def emit_word(builder : String::Builder, word : String) : Nil

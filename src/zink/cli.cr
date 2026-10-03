@@ -12,7 +12,7 @@ module Zink
       exit_code : Int32? = nil
 
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: zink [options] STORY_FILE.z3"
+        opts.banner = "Usage: zink [options] STORY_FILE.z3|.z4|.z5"
         opts.separator "Hint: set ZINK_DEBUG=1 for VM trace output"
 
         opts.on("--debug", "Enable VM trace output") { debug = true }
@@ -60,8 +60,8 @@ module Zink
       STDERR.puts("Debug mode enabled") if debug_mode
 
       story = Story.load(story_path.not_nil!)
-      if story.header.version != 3_u8
-        STDERR.puts("Only Z-machine version 3 is currently supported (got v#{story.header.version}).")
+      unless story.header.version >= 3_u8 && story.header.version <= 5_u8
+        STDERR.puts("Only Z-machine versions 3, 4, and 5 are supported (got v#{story.header.version}).")
         return 2
       end
 

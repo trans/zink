@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Crystal Docs 1.19.1">
+<meta name="generator" content="Crystal Docs 1.21.1">
 <meta name="crystal_docs.project_version" content="main-dev">
 <meta name="crystal_docs.project_name" content="zink">
 
@@ -152,6 +152,11 @@
       
     </li>
   
+  <li class=" " data-id="zink/Zink/WindowedIO" data-name="zink::windowedio">
+      <a href="../Zink/WindowedIO.html">WindowedIO</a>
+
+    </li>
+
   <li class=" " data-id="zink/Zink/WorldObject" data-name="zink::worldobject">
       <a href="../Zink/WorldObject.html">WorldObject</a>
       
@@ -216,6 +221,8 @@
     
       <li class="other-type"><a href="../Zink/ScriptedIO.html">Zink::ScriptedIO</a></li>
     
+      <li class="other-type"><a href="../Zink/WindowedIO.html">Zink::WindowedIO</a></li>
+
   </ul>
 
 
@@ -258,15 +265,77 @@
   <ul class="list-summary">
     
       <li class="entry-summary">
+        <a href="#buffer_mode%28enabled%3ABool%29%3ANil-instance-method" class="signature"><strong>#buffer_mode</strong>(enabled : Bool) : Nil</a>
+
+      </li>
+
+      <li class="entry-summary">
+        <a href="#cursor%3ATuple%28Int32%2CInt32%29-instance-method" class="signature"><strong>#cursor</strong> : Tuple(Int32, Int32)</a>
+
+      </li>
+
+      <li class="entry-summary">
+        <a href="#erase_line%3ANil-instance-method" class="signature"><strong>#erase_line</strong> : Nil</a>
+
+      </li>
+
+      <li class="entry-summary">
+        <a href="#erase_window%28window%3AInt32%29%3ANil-instance-method" class="signature"><strong>#erase_window</strong>(window : Int32) : Nil</a>
+
+      </li>
+
+      <li class="entry-summary">
         <a href="#output_text%3AString-instance-method" class="signature"><strong>#output_text</strong> : String</a>
         
       </li>
     
       <li class="entry-summary">
+        <a href="#read_char%3AInt32%7CNil-instance-method" class="signature"><strong>#read_char</strong> : Int32 | Nil</a>
+
+      </li>
+
+      <li class="entry-summary">
         <a href="#read_line%3AString%7CNil-instance-method" class="signature"><strong>#read_line</strong> : String | Nil</a>
         
       </li>
     
+      <li class="entry-summary">
+        <a href="#screen_height%3AInt32-instance-method" class="signature"><strong>#screen_height</strong> : Int32</a>
+
+      </li>
+
+      <li class="entry-summary">
+        <a href="#screen_width%3AInt32-instance-method" class="signature"><strong>#screen_width</strong> : Int32</a>
+
+      </li>
+
+      <li class="entry-summary">
+        <a href="#set_colour%28foreground%3AInt32%2Cbackground%3AInt32%29%3ANil-instance-method" class="signature"><strong>#set_colour</strong>(foreground : Int32, background : Int32) : Nil</a>
+
+      </li>
+
+      <li class="entry-summary">
+        <a href="#set_cursor%28row%3AInt32%2Ccolumn%3AInt32%29%3ANil-instance-method" class="signature"><strong>#set_cursor</strong>(row : Int32, column : Int32) : Nil</a>
+
+      </li>
+
+      <li class="entry-summary">
+        <a href="#set_text_style%28style%3AInt32%29%3ANil-instance-method" class="signature"><strong>#set_text_style</strong>(style : Int32) : Nil</a>
+
+      </li>
+
+      <li class="entry-summary">
+        <a href="#set_window%28window%3AInt32%29%3ANil-instance-method" class="signature"><strong>#set_window</strong>(window : Int32) : Nil</a>
+
+      </li>
+
+      <li class="entry-summary">
+        <a href="#split_window%28lines%3AInt32%29%3ANil-instance-method" class="signature"><strong>#split_window</strong>(lines : Int32) : Nil</a>
+
+          <div class="summary"><p>Screen operations are optional for transcript-oriented devices.</p></div>
+
+      </li>
+
       <li class="entry-summary">
         <a href="#write%28text%3AString%29%3ANil-instance-method" class="signature"><strong>#write</strong>(text : String) : Nil</a>
         
@@ -296,6 +365,62 @@
     Instance Method Detail
   </h2>
   
+    <div class="entry-detail" id="buffer_mode(enabled:Bool):Nil-instance-method">
+      <div class="signature">
+
+        def <strong>buffer_mode</strong>(enabled : Bool) : Nil
+
+        <a class="method-permalink" href="#buffer_mode%28enabled%3ABool%29%3ANil-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="entry-detail" id="cursor:Tuple(Int32,Int32)-instance-method">
+      <div class="signature">
+
+        def <strong>cursor</strong> : Tuple(Int32, Int32)
+
+        <a class="method-permalink" href="#cursor%3ATuple%28Int32%2CInt32%29-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="entry-detail" id="erase_line:Nil-instance-method">
+      <div class="signature">
+
+        def <strong>erase_line</strong> : Nil
+
+        <a class="method-permalink" href="#erase_line%3ANil-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="entry-detail" id="erase_window(window:Int32):Nil-instance-method">
+      <div class="signature">
+
+        def <strong>erase_window</strong>(window : Int32) : Nil
+
+        <a class="method-permalink" href="#erase_window%28window%3AInt32%29%3ANil-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="output_text:String-instance-method">
       <div class="signature">
         
@@ -310,6 +435,20 @@
       </div>
     </div>
   
+    <div class="entry-detail" id="read_char:Int32|Nil-instance-method">
+      <div class="signature">
+
+        def <strong>read_char</strong> : Int32 | Nil
+
+        <a class="method-permalink" href="#read_char%3AInt32%7CNil-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="read_line:String|Nil-instance-method">
       <div class="signature">
         abstract 
@@ -324,6 +463,109 @@
       </div>
     </div>
   
+    <div class="entry-detail" id="screen_height:Int32-instance-method">
+      <div class="signature">
+
+        def <strong>screen_height</strong> : Int32
+
+        <a class="method-permalink" href="#screen_height%3AInt32-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="entry-detail" id="screen_width:Int32-instance-method">
+      <div class="signature">
+
+        def <strong>screen_width</strong> : Int32
+
+        <a class="method-permalink" href="#screen_width%3AInt32-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="entry-detail" id="set_colour(foreground:Int32,background:Int32):Nil-instance-method">
+      <div class="signature">
+
+        def <strong>set_colour</strong>(foreground : Int32, background : Int32) : Nil
+
+        <a class="method-permalink" href="#set_colour%28foreground%3AInt32%2Cbackground%3AInt32%29%3ANil-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="entry-detail" id="set_cursor(row:Int32,column:Int32):Nil-instance-method">
+      <div class="signature">
+
+        def <strong>set_cursor</strong>(row : Int32, column : Int32) : Nil
+
+        <a class="method-permalink" href="#set_cursor%28row%3AInt32%2Ccolumn%3AInt32%29%3ANil-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="entry-detail" id="set_text_style(style:Int32):Nil-instance-method">
+      <div class="signature">
+
+        def <strong>set_text_style</strong>(style : Int32) : Nil
+
+        <a class="method-permalink" href="#set_text_style%28style%3AInt32%29%3ANil-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="entry-detail" id="set_window(window:Int32):Nil-instance-method">
+      <div class="signature">
+
+        def <strong>set_window</strong>(window : Int32) : Nil
+
+        <a class="method-permalink" href="#set_window%28window%3AInt32%29%3ANil-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="entry-detail" id="split_window(lines:Int32):Nil-instance-method">
+      <div class="signature">
+
+        def <strong>split_window</strong>(lines : Int32) : Nil
+
+        <a class="method-permalink" href="#split_window%28lines%3AInt32%29%3ANil-instance-method">#</a>
+      </div>
+
+        <div class="doc">
+
+          <p>Screen operations are optional for transcript-oriented devices.</p>
+        </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="write(text:String):Nil-instance-method">
       <div class="signature">
         abstract 

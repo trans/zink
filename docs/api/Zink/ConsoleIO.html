@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Crystal Docs 1.19.1">
+<meta name="generator" content="Crystal Docs 1.21.1">
 <meta name="crystal_docs.project_version" content="main-dev">
 <meta name="crystal_docs.project_name" content="zink">
 
@@ -152,6 +152,11 @@
       
     </li>
   
+  <li class=" " data-id="zink/Zink/WindowedIO" data-name="zink::windowedio">
+      <a href="../Zink/WindowedIO.html">WindowedIO</a>
+
+    </li>
+
   <li class=" " data-id="zink/Zink/WorldObject" data-name="zink::worldobject">
       <a href="../Zink/WorldObject.html">WorldObject</a>
       
@@ -276,6 +281,16 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#screen_height%3AInt32-instance-method" class="signature"><strong>#screen_height</strong> : Int32</a>
+
+      </li>
+
+      <li class="entry-summary">
+        <a href="#screen_width%3AInt32-instance-method" class="signature"><strong>#screen_width</strong> : Int32</a>
+
+      </li>
+
+      <li class="entry-summary">
         <a href="#write%28text%3AString%29%3ANil-instance-method" class="signature"><strong>#write</strong>(text : String) : Nil</a>
         
       </li>
@@ -291,16 +306,76 @@
   <h3>Instance methods inherited from module <code><a href="../Zink/IODevice.html">Zink::IODevice</a></code></h3>
   
   
+    <a href="../Zink/IODevice.html#buffer_mode%28enabled%3ABool%29%3ANil-instance-method" class="tooltip">
+      <span>buffer_mode(enabled : Bool) : Nil</span>
+    buffer_mode</a>,
+
+
+    <a href="../Zink/IODevice.html#cursor%3ATuple%28Int32%2CInt32%29-instance-method" class="tooltip">
+      <span>cursor : Tuple(Int32, Int32)</span>
+    cursor</a>,
+
+
+    <a href="../Zink/IODevice.html#erase_line%3ANil-instance-method" class="tooltip">
+      <span>erase_line : Nil</span>
+    erase_line</a>,
+
+
+    <a href="../Zink/IODevice.html#erase_window%28window%3AInt32%29%3ANil-instance-method" class="tooltip">
+      <span>erase_window(window : Int32) : Nil</span>
+    erase_window</a>,
+
+
     <a href="../Zink/IODevice.html#output_text%3AString-instance-method" class="tooltip">
       <span>output_text : String</span>
     output_text</a>, 
     
   
+    <a href="../Zink/IODevice.html#read_char%3AInt32%7CNil-instance-method" class="tooltip">
+      <span>read_char : Int32 | Nil</span>
+    read_char</a>,
+
+
     <a href="../Zink/IODevice.html#read_line%3AString%7CNil-instance-method" class="tooltip">
       <span>read_line : String | Nil</span>
     read_line</a>, 
     
   
+    <a href="../Zink/IODevice.html#screen_height%3AInt32-instance-method" class="tooltip">
+      <span>screen_height : Int32</span>
+    screen_height</a>,
+
+
+    <a href="../Zink/IODevice.html#screen_width%3AInt32-instance-method" class="tooltip">
+      <span>screen_width : Int32</span>
+    screen_width</a>,
+
+
+    <a href="../Zink/IODevice.html#set_colour%28foreground%3AInt32%2Cbackground%3AInt32%29%3ANil-instance-method" class="tooltip">
+      <span>set_colour(foreground : Int32, background : Int32) : Nil</span>
+    set_colour</a>,
+
+
+    <a href="../Zink/IODevice.html#set_cursor%28row%3AInt32%2Ccolumn%3AInt32%29%3ANil-instance-method" class="tooltip">
+      <span>set_cursor(row : Int32, column : Int32) : Nil</span>
+    set_cursor</a>,
+
+
+    <a href="../Zink/IODevice.html#set_text_style%28style%3AInt32%29%3ANil-instance-method" class="tooltip">
+      <span>set_text_style(style : Int32) : Nil</span>
+    set_text_style</a>,
+
+
+    <a href="../Zink/IODevice.html#set_window%28window%3AInt32%29%3ANil-instance-method" class="tooltip">
+      <span>set_window(window : Int32) : Nil</span>
+    set_window</a>,
+
+
+    <a href="../Zink/IODevice.html#split_window%28lines%3AInt32%29%3ANil-instance-method" class="tooltip">
+      <span>split_window(lines : Int32) : Nil</span>
+    split_window</a>,
+
+
     <a href="../Zink/IODevice.html#write%28text%3AString%29%3ANil-instance-method" class="tooltip">
       <span>write(text : String) : Nil</span>
     write</a>
@@ -400,6 +475,34 @@
       </div>
     </div>
   
+    <div class="entry-detail" id="screen_height:Int32-instance-method">
+      <div class="signature">
+
+        def <strong>screen_height</strong> : Int32
+
+        <a class="method-permalink" href="#screen_height%3AInt32-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="entry-detail" id="screen_width:Int32-instance-method">
+      <div class="signature">
+
+        def <strong>screen_width</strong> : Int32
+
+        <a class="method-permalink" href="#screen_width%3AInt32-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="write(text:String):Nil-instance-method">
       <div class="signature">
         

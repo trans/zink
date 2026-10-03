@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Crystal Docs 1.19.1">
+<meta name="generator" content="Crystal Docs 1.21.1">
 <meta name="crystal_docs.project_version" content="main-dev">
 <meta name="crystal_docs.project_name" content="zink">
 
@@ -152,6 +152,11 @@
       
     </li>
   
+  <li class=" " data-id="zink/Zink/WindowedIO" data-name="zink::windowedio">
+      <a href="../Zink/WindowedIO.html">WindowedIO</a>
+
+    </li>
+
   <li class=" " data-id="zink/Zink/WorldObject" data-name="zink::worldobject">
       <a href="../Zink/WorldObject.html">WorldObject</a>
       
@@ -248,7 +253,7 @@
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#new%28return_pc%3AInt32%2Cstore_variable%3AUInt8%7CNil%2Clocals%3AArray%28UInt16%29%2Cstack_base%3AInt32%29-class-method" class="signature"><strong>.new</strong>(return_pc : Int32, store_variable : UInt8 | Nil, locals : Array(UInt16), stack_base : Int32)</a>
+        <a href="#new%28return_pc%3AInt32%2Cstore_variable%3AUInt8%7CNil%2Clocals%3AArray%28UInt16%29%2Cstack_base%3AInt32%2Carg_count%3AInt32%3D0%29-class-method" class="signature"><strong>.new</strong>(return_pc : Int32, store_variable : UInt8 | Nil, locals : Array(UInt16), stack_base : Int32, arg_count : Int32 = <span class="n">0</span>)</a>
         
       </li>
     
@@ -280,6 +285,11 @@
   </h2>
   <ul class="list-summary">
     
+      <li class="entry-summary">
+        <a href="#arg_count%3AInt32-instance-method" class="signature"><strong>#arg_count</strong> : Int32</a>
+
+      </li>
+
       <li class="entry-summary">
         <a href="#locals%3AArray%28UInt16%29-instance-method" class="signature"><strong>#locals</strong> : Array(UInt16)</a>
         
@@ -370,12 +380,12 @@
     Constructor Detail
   </h2>
   
-    <div class="entry-detail" id="new(return_pc:Int32,store_variable:UInt8|Nil,locals:Array(UInt16),stack_base:Int32)-class-method">
+    <div class="entry-detail" id="new(return_pc:Int32,store_variable:UInt8|Nil,locals:Array(UInt16),stack_base:Int32,arg_count:Int32=0)-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(return_pc : Int32, store_variable : UInt8 | Nil, locals : Array(UInt16), stack_base : Int32)
+        def self.<strong>new</strong>(return_pc : Int32, store_variable : UInt8 | Nil, locals : Array(UInt16), stack_base : Int32, arg_count : Int32 = <span class="n">0</span>)
 
-        <a class="method-permalink" href="#new%28return_pc%3AInt32%2Cstore_variable%3AUInt8%7CNil%2Clocals%3AArray%28UInt16%29%2Cstack_base%3AInt32%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28return_pc%3AInt32%2Cstore_variable%3AUInt8%7CNil%2Clocals%3AArray%28UInt16%29%2Cstack_base%3AInt32%2Carg_count%3AInt32%3D0%29-class-method">#</a>
       </div>
       
       <br/>
@@ -428,6 +438,20 @@
     Instance Method Detail
   </h2>
   
+    <div class="entry-detail" id="arg_count:Int32-instance-method">
+      <div class="signature">
+
+        def <strong>arg_count</strong> : Int32
+
+        <a class="method-permalink" href="#arg_count%3AInt32-instance-method">#</a>
+      </div>
+
+      <br/>
+      <div>
+
+      </div>
+    </div>
+
     <div class="entry-detail" id="locals:Array(UInt16)-instance-method">
       <div class="signature">
         
